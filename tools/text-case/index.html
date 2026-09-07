@@ -74,6 +74,7 @@
   </div>
   <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
 </footer>
+<script src="logic.js"></script>
 <script src="/assets/js/app.js" defer></script>
 <script>
 window.tbInit = function () {
@@ -81,24 +82,17 @@ window.tbInit = function () {
   const output = document.getElementById('output-text');
   const status = document.getElementById('tool-status');
   const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
-  const MINOR = new Set(['a','an','and','as','at','but','by','for','in','nor','of','on','or','per','the','to','vs','via']);
-  const words = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-                       .split(/[\s_\-]+/).map(w => w.trim()).filter(Boolean);
-  const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  const C = globalThis.TBTextCase;
   const converters = {
-    upper: (s) => s.toUpperCase(),
-    lower: (s) => s.toLowerCase(),
-    title: (s) => s.toLowerCase().split(/(\s+)/).map((word, i) => {
-      if (!word || /\s/.test(word)) return word;
-      if (i !== 0 && MINOR.has(word)) return word;
-      return cap(word);
-    }).join(''),
-    sentence: (s) => s.toLowerCase().replace(/(^\s*[a-z])|([.!?]\s+[a-z])/g, (m) => m.toUpperCase()),
-    camel: (s) => words(s).map((w, i) => i === 0 ? w.toLowerCase() : cap(w)).join(''),
-    pascal: (s) => words(s).map(cap).join(''),
-    snake: (s) => words(s).map(w => w.toLowerCase()).join('_'),
-    kebab: (s) => words(s).map(w => w.toLowerCase()).join('-'),
-    constant: (s) => words(s).map(w => w.toUpperCase()).join('_'),
+    upper: C.upper,
+    lower: C.lower,
+    title: C.title,
+    sentence: C.sentence,
+    camel: C.camel,
+    pascal: C.pascal,
+    snake: C.snake,
+    kebab: C.kebab,
+    constant: C.constant,
   };
   document.querySelectorAll('[data-case]').forEach((btn) => {
     btn.addEventListener('click', () => {

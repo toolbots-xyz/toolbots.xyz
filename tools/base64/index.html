@@ -63,6 +63,7 @@
   </div>
   <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
 </footer>
+<script src="logic.js"></script>
 <script src="/assets/js/app.js" defer></script>
 <script>
 window.tbInit = function () {
@@ -71,23 +72,9 @@ window.tbInit = function () {
   const status = document.getElementById('tool-status');
   const urlsafe = document.getElementById('urlsafe');
   const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
-  const encode = (str) => {
-    const bytes = new TextEncoder().encode(str);
-    let bin = ''; const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-    let b64 = btoa(bin);
-    if (urlsafe.checked) b64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return b64;
-  };
-  const decode = (b64) => {
-    let s = b64.trim().replace(/\s+/g, '');
-    if (urlsafe.checked || /[-_]/.test(s)) s = s.replace(/-/g, '+').replace(/_/g, '/');
-    while (s.length % 4) s += '=';
-    const bin = atob(s);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-  };
+  const B = globalThis.TBBase64;
+  const encode = (str) => B.encode(str, urlsafe.checked);
+  const decode = (b64) => B.decode(b64, urlsafe.checked);
   document.getElementById('encode-btn').addEventListener('click', () => {
     if (!input.value) { set(false, 'Nothing to encode.'); return; }
     try { output.value = encode(input.value); set(true, '✓ Encoded · ' + output.value.length + ' Base64 characters'); }

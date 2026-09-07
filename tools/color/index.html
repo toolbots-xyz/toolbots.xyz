@@ -56,7 +56,7 @@
     <div class="tool-docs">
       <h2>How it works</h2>
       <p>Enter a HEX value or use the picker. The tool converts between HEX, RGB, and HSL, computes WCAG 2.1 relative-luminance
-      contrast ratios against white and black, and derives 5 tints (lighter) and 5 shades (darker).</p>
+      contrast ratios against white and black, and derives a 9-swatch palette (4 tints, the base color, 4 shades).</p>
       <h2>Privacy</h2>
       <p>All math runs locally — no network requests at all on this page.</p>
     </div>
@@ -72,6 +72,7 @@
   </div>
   <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
 </footer>
+<script src="logic.js"></script>
 <script src="/assets/js/app.js" defer></script>
 <script>
 window.tbInit = function () {
@@ -85,36 +86,9 @@ window.tbInit = function () {
   const ctBlack = document.getElementById('ct-black');
   const palette = document.getElementById('palette');
   const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
-  const hex2rgb = (h) => {
-    let s = h.trim().replace(/^#/, '');
-    if (/^[0-9a-f]{3}$/i.test(s)) s = s.split('').map(c => c + c).join('');
-    if (!/^[0-9a-f]{6}$/i.test(s)) return null;
-    return { r: parseInt(s.slice(0,2),16), g: parseInt(s.slice(2,4),16), b: parseInt(s.slice(4,6),16) };
-  };
-  const rgb2hsl = ({r,g,b}) => {
-    r/=255; g/=255; b/=255;
-    const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max-min;
-    let h = 0, s = 0, l = (max+min)/2;
-    if (d) {
-      s = l > .5 ? d/(2-max-min) : d/(max+min);
-      if (max===r) h = ((g-b)/d + (g<b?6:0));
-      else if (max===g) h = (b-r)/d + 2;
-      else h = (r-g)/d + 4;
-      h = Math.round(h*60);
-    }
-    return { h, s: Math.round(s*100), l: Math.round(l*100) };
-  };
-  const lum = ({r,g,b}) => {
-    const f = c => { c/=255; return c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); };
-    return .2126*f(r) + .7152*f(g) + .0722*f(b);
-  };
-  const ratio = (l1, l2) => (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05);
-  const mix = (c, target, pct) => ({
-    r: Math.round(c.r + (target.r-c.r)*pct),
-    g: Math.round(c.g + (target.g-c.g)*pct),
-    b: Math.round(c.b + (target.b-c.b)*pct),
-  });
-  const toHex = ({r,g,b}) => '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+  const C = globalThis.TBColor;
+  const hex2rgb = C.hex2rgb, rgb2hsl = C.rgb2hsl, lum = C.luminance,
+        ratio = C.contrastRatio, mix = C.mix, toHex = C.toHex;
   function render(hex) {
     const rgb = hex2rgb(hex);
     if (!rgb) { set(false, '✗ Enter a valid hex color like #22d3ee or #abc.'); return; }
