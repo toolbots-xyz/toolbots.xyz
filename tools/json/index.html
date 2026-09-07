@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Validate, format, and minify JSON instantly in your browser. No uploads, no sign-up.">
+<title>JSON Formatter — ToolBots</title>
+<link rel="canonical" href="https://toolbots.xyz/tools/json/">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script type="application/ld+json" class="tb-tool">
+{"name":"JSON Formatter","description":"Validate, format, and minify JSON instantly — right in your browser, with nothing ever uploaded.","inputElement":"input-text","outputElement":"output-text","faq":[
+["Is my JSON uploaded anywhere?","No. Parsing happens entirely in your browser with JavaScript. The site has no backend that could receive your data."],
+["How large a file can it handle?","Comfortably files up to several megabytes — everything runs in memory on your device. Very large files just take a moment."],
+["What does the error message mean?","When JSON is invalid, the parser reports the problem and the character position where it was detected, e.g. \u201cUnexpected token } at position 42\u201d."]]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/><rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/><circle cx="12" cy="16.5" r="2" fill="#0b1020"/></svg></span>ToolBots<span class="tld">.xyz</span></a>
+    <nav class="main-nav" aria-label="Main"><a href="/#tools" class="nav-link">Tools</a><a href="/#about" class="nav-link">About</a><span class="nav-bits">Esc = clear</span></nav>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap tool-head">
+    <p class="crumb"><a href="/">ToolBots</a> / <span data-tb="crumb-name"></span></p>
+    <h1 data-tb="page-title"></h1>
+    <p class="lede" data-tb="lede"></p>
+  </div>
+  <div class="wrap">
+    <div class="workbench">
+      <div><label for="input-text">JSON input</label>
+        <textarea id="input-text" spellcheck="false" placeholder='{"hello": "world", "items": [1, 2, 3]}'></textarea></div>
+      <div class="wb-row actions wb-btns">
+        <button id="format-btn" class="btn-sm primary">Format</button>
+        <button id="minify-btn" class="btn-sm ghost">Minify</button>
+        <button id="copy-btn" data-tb="copy-btn" class="btn-sm ghost">Copy</button>
+        <button id="clear-btn" data-tb="clear-btn" class="btn-sm ghost">Clear</button>
+      </div>
+      <div id="tool-status" class="status" role="status" aria-live="polite"></div>
+      <div><label for="output-text">Output</label>
+        <textarea id="output-text" readonly spellcheck="false" placeholder="Formatted JSON appears here…"></textarea></div>
+    </div>
+    <div class="tool-docs">
+      <h2>How it works</h2>
+      <p>Paste JSON and press <strong>Format</strong> for pretty-printed output or <strong>Minify</strong> to strip all whitespace.
+      Validation runs live as you type — the status line turns green the moment your JSON is parseable, and shows the parser's
+      error message and position when it isn't.</p>
+      <h2>Privacy</h2>
+      <p>This page is a static file. Your JSON is parsed by your own browser's JavaScript engine and never sent over the network —
+      you can even disconnect from the internet and keep using it.</p>
+    </div>
+    <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand"><span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span><p>Free, private, bot-run browser tools.</p></div>
+    <nav class="footer-col" aria-label="Tools"><h4>Tools</h4><a href="/tools/json/">JSON formatter</a><a href="/tools/base64/">Base64 encoder</a><a href="/tools/hash/">SHA-256 hasher</a><a href="/tools/text-case/">Text case converter</a><a href="/tools/uuid/">UUID generator</a><a href="/tools/color/">Color inspector</a></nav>
+    <nav class="footer-col" aria-label="Site"><h4>Site</h4><a href="/#about">About</a><a href="/llms.txt">llms.txt</a><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">Sitemap</a><a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a></nav>
+    <div class="footer-col footer-meta"><h4>Status</h4><p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p><p class="fineprint">© 2026 ToolBots · Public source · No tracking</p></div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+</footer>
+<script src="/assets/js/app.js" defer></script>
+<script>
+window.tbInit = function () {
+  const input = document.getElementById('input-text');
+  const output = document.getElementById('output-text');
+  const status = document.getElementById('tool-status');
+  const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
+  const run = (mode) => {
+    if (!input.value.trim()) { set(false, 'Nothing to process — paste some JSON first.'); return; }
+    try {
+      const parsed = JSON.parse(input.value);
+      output.value = mode === 'minify' ? JSON.stringify(parsed) : JSON.stringify(parsed, null, 2);
+      const n = Array.isArray(parsed) ? parsed.length + ' items' : (parsed && typeof parsed === 'object' ? Object.keys(parsed).length + ' keys' : 'scalar');
+      set(true, '✓ Valid JSON · ' + n);
+    } catch (e) { set(false, '✗ ' + e.message); }
+  };
+  document.getElementById('format-btn').addEventListener('click', () => run('format'));
+  document.getElementById('minify-btn').addEventListener('click', () => run('minify'));
+  input.addEventListener('input', () => {
+    if (!input.value.trim()) { status.textContent = ''; status.className = 'status'; return; }
+    try { JSON.parse(input.value); set(true, '✓ Valid JSON'); } catch (e) { set(false, '✗ ' + e.message); }
+  });
+};
+</script>
+</body>
+</html>

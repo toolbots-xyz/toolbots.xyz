@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<meta name="description" content="ToolBots — free, private, no-signup browser tools. JSON, Base64, hashes, UUIDs, text case, colors. Everything runs on your device; nothing is uploaded.">
+<meta property="og:title" content="ToolBots — free tools run by bots">
+<meta property="og:description" content="Free, private, no-signup browser tools. Your data never leaves your device.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://toolbots.xyz/">
+<title>ToolBots — free tools that run on your device</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://toolbots.xyz/">
+<link rel="stylesheet" href="assets/css/style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"ToolBots","alternateName":"toolbots.xyz","url":"https://toolbots.xyz/"}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/" aria-label="ToolBots home">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/>
+          <rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/>
+          <circle cx="12" cy="16.5" r="2" fill="#0b1020"/>
+        </svg>
+      </span>
+      ToolBots<span class="tld">.xyz</span>
+    </a>
+    <nav class="main-nav" aria-label="Main">
+      <a href="#tools" class="nav-link">Tools</a>
+      <a href="#about" class="nav-link">About</a>
+      <a href="/docs/robots.txt" class="nav-link nav-quiet" title="For bots and agents">robots.txt</a>
+      <a href="https://github.com/toolbots-xyz/toolbots.xyz" class="nav-link nav-quiet" rel="noopener">GitHub</a>
+      <span class="nav-bits">⌘K</span>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap">
+      <p class="hero-kicker"><span class="dot" aria-hidden="true"></span> 6 tools online · 0 accounts · 0 uploads</p>
+      <h1>Tools that run themselves.<br><span class="hero-sub">Your data never leaves your device.</span></h1>
+      <p class="hero-copy">Free, instant tools for developers and humans. No sign-up, no tracking, no server-side processing —
+      every tool runs client-side in your browser, and the site is maintained by autonomous bots.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#tools">Browse tools</a>
+        <a class="btn btn-ghost" href="#about">How it works</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="tools" class="section" aria-labelledby="tools-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="tools-h">The bots</h2>
+        <input id="tool-filter" type="search" placeholder="Filter tools…  ( / )" autocomplete="off" aria-label="Filter tools">
+      </div>
+      <div id="tool-grid" class="tool-grid"></div>
+      <p id="no-results" class="no-results" hidden>No bots match that filter.</p>
+    </div>
+  </section>
+
+  <section id="about" class="section section-alt" aria-labelledby="about-h">
+    <div class="wrap">
+      <div class="about-grid">
+        <div>
+          <h2 id="about-h">Run by bots. Built for privacy.</h2>
+          <p>ToolBots is operated by a crew of autonomous agents. The chief of staff (a Hermes agent) plans and reviews;
+          builder bots ship each tool as a self-contained page; an ops bot watches uptime and fixes regressions.</p>
+          <p>Every tool is static HTML/JS — there is no backend that could log, store, or leak your input.
+          Deployments go out through GitHub Actions, and every change lands in public source.</p>
+        </div>
+        <div class="about-panel">
+          <h3>Why it's free</h3>
+          <p>Static hosting on GitHub Pages + Cloudflare costs $0. If ToolBots ever needs revenue, it will come from
+          unobtrusive sponsorship or optional pro features — never from selling user data, because there is no user data.</p>
+          <h3>For agents &amp; humans</h3>
+          <p>Every page is semantic HTML that works without JavaScript rendering, and <code>llms.txt</code> +
+          <code>robots.txt</code> describe the site for automated visitors.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand">
+      <span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span>
+      <p>Free, private, bot-run browser tools.</p>
+    </div>
+    <nav class="footer-col" aria-label="Tools">
+      <h4>Tools</h4>
+      <a href="/tools/json/">JSON formatter</a>
+      <a href="/tools/base64/">Base64 encoder</a>
+      <a href="/tools/hash/">SHA-256 hasher</a>
+      <a href="/tools/text-case/">Text case converter</a>
+      <a href="/tools/uuid/">UUID generator</a>
+      <a href="/tools/color/">Color inspector</a>
+    </nav>
+    <nav class="footer-col" aria-label="Site">
+      <h4>Site</h4>
+      <a href="#about">About</a>
+      <a href="/llms.txt">llms.txt</a>
+      <a href="/robots.txt">robots.txt</a>
+      <a href="/sitemap.xml">Sitemap</a>
+      <a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a>
+    </nav>
+    <div class="footer-col footer-meta">
+      <h4>Status</h4>
+      <p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p>
+      <p class="fineprint">© 2026 ToolBots · Public source · No tracking</p>
+    </div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebSite","name":"ToolBots","url":"https://toolbots.xyz/"}
+  </script>
+</footer>
+
+<script src="assets/js/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Convert text between UPPERCASE, lowercase, Title Case, camelCase, snake_case, kebab-case and more. Instant, private, no sign-up.">
+<title>Text Case Converter — ToolBots</title>
+<link rel="canonical" href="https://toolbots.xyz/tools/text-case/">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script type="application/ld+json" class="tb-tool">
+{"name":"Text Case Converter","description":"Convert text between uppercase, lowercase, title case, sentence case, camelCase, PascalCase, snake_case, kebab-case and CONSTANT_CASE — instantly, in your browser.","inputElement":"input-text","outputElement":"output-text","faq":[
+["What's the difference between camelCase and PascalCase?","camelCase starts with a lowercase letter (myVariableName); PascalCase capitalizes every word including the first (MyVariableName)."],
+["How is Title Case decided?","Minor words (a, an, the, and, or, of, in, to, for…) stay lowercase unless they start the title — following standard headline style."],
+["Does it handle accented characters?","Yes — case conversion uses the browser's locale-aware functions, so é, ß, and other Unicode characters convert correctly."]]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/><rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/><circle cx="12" cy="16.5" r="2" fill="#0b1020"/></svg></span>ToolBots<span class="tld">.xyz</span></a>
+    <nav class="main-nav" aria-label="Main"><a href="/#tools" class="nav-link">Tools</a><a href="/#about" class="nav-link">About</a><span class="nav-bits">Esc = clear</span></nav>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap tool-head">
+    <p class="crumb"><a href="/">ToolBots</a> / <span data-tb="crumb-name"></span></p>
+    <h1 data-tb="page-title"></h1>
+    <p class="lede" data-tb="lede"></p>
+  </div>
+  <div class="wrap">
+    <div class="workbench">
+      <div><label for="input-text">Your text</label>
+        <textarea id="input-text" spellcheck="false" placeholder="The quick brown fox jumps over the lazy dog"></textarea></div>
+      <div class="wb-row actions wb-btns">
+        <button data-case="upper"    class="btn-sm primary">UPPERCASE</button>
+        <button data-case="lower"    class="btn-sm primary">lowercase</button>
+        <button data-case="title"    class="btn-sm primary">Title Case</button>
+        <button data-case="sentence" class="btn-sm primary">Sentence case</button>
+      </div>
+      <div class="wb-row actions wb-btns">
+        <button data-case="camel"    class="btn-sm ghost">camelCase</button>
+        <button data-case="pascal"   class="btn-sm ghost">PascalCase</button>
+        <button data-case="snake"    class="btn-sm ghost">snake_case</button>
+        <button data-case="kebab"    class="btn-sm ghost">kebab-case</button>
+        <button data-case="constant" class="btn-sm ghost">CONSTANT_CASE</button>
+      </div>
+      <div id="tool-status" class="status" role="status" aria-live="polite"></div>
+      <div><label for="output-text">Result</label>
+        <textarea id="output-text" readonly spellcheck="false" placeholder="Converted text appears here…"></textarea></div>
+      <div class="wb-row actions wb-btns">
+        <button id="copy-btn" data-tb="copy-btn" class="btn-sm ghost">Copy</button>
+        <button id="clear-btn" data-tb="clear-btn" class="btn-sm ghost">Clear</button>
+      </div>
+    </div>
+    <div class="tool-docs">
+      <h2>How it works</h2>
+      <p>Type or paste text, then click a case. Programming cases (camel, Pascal, snake, kebab, constant) first split your
+      text into words — treating spaces, hyphens, underscores, and existing camel humps as boundaries — then join with the
+      right convention.</p>
+      <h2>Privacy</h2>
+      <p>All conversion happens locally in your browser.</p>
+    </div>
+    <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand"><span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span><p>Free, private, bot-run browser tools.</p></div>
+    <nav class="footer-col" aria-label="Tools"><h4>Tools</h4><a href="/tools/json/">JSON formatter</a><a href="/tools/base64/">Base64 encoder</a><a href="/tools/hash/">SHA-256 hasher</a><a href="/tools/text-case/">Text case converter</a><a href="/tools/uuid/">UUID generator</a><a href="/tools/color/">Color inspector</a></nav>
+    <nav class="footer-col" aria-label="Site"><h4>Site</h4><a href="/#about">About</a><a href="/llms.txt">llms.txt</a><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">Sitemap</a><a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a></nav>
+    <div class="footer-col footer-meta"><h4>Status</h4><p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p><p class="fineprint">© 2026 ToolBots · Public source · No tracking</p></div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+</footer>
+<script src="/assets/js/app.js" defer></script>
+<script>
+window.tbInit = function () {
+  const input = document.getElementById('input-text');
+  const output = document.getElementById('output-text');
+  const status = document.getElementById('tool-status');
+  const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
+  const MINOR = new Set(['a','an','and','as','at','but','by','for','in','nor','of','on','or','per','the','to','vs','via']);
+  const words = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                       .split(/[\s_\-]+/).map(w => w.trim()).filter(Boolean);
+  const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  const converters = {
+    upper: (s) => s.toUpperCase(),
+    lower: (s) => s.toLowerCase(),
+    title: (s) => s.toLowerCase().split(/(\s+)/).map((word, i) => {
+      if (!word || /\s/.test(word)) return word;
+      if (i !== 0 && MINOR.has(word)) return word;
+      return cap(word);
+    }).join(''),
+    sentence: (s) => s.toLowerCase().replace(/(^\s*[a-z])|([.!?]\s+[a-z])/g, (m) => m.toUpperCase()),
+    camel: (s) => words(s).map((w, i) => i === 0 ? w.toLowerCase() : cap(w)).join(''),
+    pascal: (s) => words(s).map(cap).join(''),
+    snake: (s) => words(s).map(w => w.toLowerCase()).join('_'),
+    kebab: (s) => words(s).map(w => w.toLowerCase()).join('-'),
+    constant: (s) => words(s).map(w => w.toUpperCase()).join('_'),
+  };
+  document.querySelectorAll('[data-case]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!input.value.trim()) { set(false, 'Type or paste some text first.'); return; }
+      try {
+        output.value = converters[btn.dataset.case](input.value);
+        set(true, '✓ Converted · ' + output.value.length + ' characters');
+      } catch (e) { set(false, '✗ ' + e.message); }
+    });
+  });
+};
+</script>
+</body>
+</html>

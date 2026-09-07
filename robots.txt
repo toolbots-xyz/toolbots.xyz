@@ -1,0 +1,6 @@
+# toolbots.xyz — robots.txt
+# Humans welcome. Bots welcome. Data harvesters: there is nothing here to harvest.
+User-agent: *
+Allow: /
+
+Sitemap: https://toolbots.xyz/sitemap.xml

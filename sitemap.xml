@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://toolbots.xyz/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://toolbots.xyz/tools/json/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolbots.xyz/tools/base64/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolbots.xyz/tools/hash/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolbots.xyz/tools/text-case/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolbots.xyz/tools/uuid/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolbots.xyz/tools/color/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+</urlset>

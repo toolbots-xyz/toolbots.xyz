@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Compute SHA-1, SHA-256, SHA-384, or SHA-512 hashes of any text in your browser via the Web Crypto API. Nothing is uploaded.">
+<title>SHA-256 Hasher — ToolBots</title>
+<link rel="canonical" href="https://toolbots.xyz/tools/hash/">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script type="application/ld+json" class="tb-tool">
+{"name":"SHA-256 Hasher","description":"Compute SHA-1, SHA-256, SHA-384, or SHA-512 hashes of any text instantly in your browser via the Web Crypto API.","inputElement":"input-text","outputElement":"output-text","faq":[
+["Is hashing here safe for passwords?","The hash is computed on your device, so the plaintext never leaves it — but remember that a plain SHA hash is not password storage. Use a proper password manager or argon2/bcrypt for that."],
+["What is the difference between the algorithms?","They differ in digest length and collision resistance: SHA-1 (160-bit) is legacy and deprecated for security use; SHA-256 and above are current standards."],
+["Can I hash files?","File hashing is on the roadmap. For now this tool hashes text input only."]]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/><rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/><circle cx="12" cy="16.5" r="2" fill="#0b1020"/></svg></span>ToolBots<span class="tld">.xyz</span></a>
+    <nav class="main-nav" aria-label="Main"><a href="/#tools" class="nav-link">Tools</a><a href="/#about" class="nav-link">About</a><span class="nav-bits">Esc = clear</span></nav>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap tool-head">
+    <p class="crumb"><a href="/">ToolBots</a> / <span data-tb="crumb-name"></span></p>
+    <h1 data-tb="page-title"></h1>
+    <p class="lede" data-tb="lede"></p>
+  </div>
+  <div class="wrap">
+    <div class="workbench">
+      <div><label for="input-text">Text to hash</label>
+        <textarea id="input-text" spellcheck="false" placeholder="Paste any text — it never leaves your device."></textarea></div>
+      <div class="wb-row">
+        <div><label for="algo">Algorithm</label>
+          <select id="algo"><option value="SHA-1">SHA-1 (legacy)</option><option value="SHA-256" selected>SHA-256</option><option value="SHA-384">SHA-384</option><option value="SHA-512">SHA-512</option></select></div>
+        <div class="wb-btns" style="align-self: end;">
+          <button id="hash-btn" class="btn-sm primary">Hash</button>
+          <button id="copy-btn" data-tb="copy-btn" class="btn-sm ghost">Copy</button>
+          <button id="clear-btn" data-tb="clear-btn" class="btn-sm ghost">Clear</button>
+        </div>
+      </div>
+      <div id="tool-status" class="status" role="status" aria-live="polite"></div>
+      <div><label>Hex digest</label>
+        <div class="prewrap"><pre id="output-text"></pre></div></div>
+    </div>
+    <div class="tool-docs">
+      <h2>How it works</h2>
+      <p>Your text is encoded as UTF-8 and digested with the browser's native <strong>Web Crypto API</strong> — the same
+      cryptographic implementation your operating system relies on. The digest is shown as lowercase hexadecimal.</p>
+      <h2>Privacy</h2>
+      <p>Hashing is performed locally. Unlike many online hash tools, no text is ever submitted to a server.</p>
+    </div>
+    <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand"><span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span><p>Free, private, bot-run browser tools.</p></div>
+    <nav class="footer-col" aria-label="Tools"><h4>Tools</h4><a href="/tools/json/">JSON formatter</a><a href="/tools/base64/">Base64 encoder</a><a href="/tools/hash/">SHA-256 hasher</a><a href="/tools/text-case/">Text case converter</a><a href="/tools/uuid/">UUID generator</a><a href="/tools/color/">Color inspector</a></nav>
+    <nav class="footer-col" aria-label="Site"><h4>Site</h4><a href="/#about">About</a><a href="/llms.txt">llms.txt</a><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">Sitemap</a><a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a></nav>
+    <div class="footer-col footer-meta"><h4>Status</h4><p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p><p class="fineprint">© 2026 ToolBots · Public source · No tracking</p></div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+</footer>
+<script src="/assets/js/app.js" defer></script>
+<script>
+window.tbInit = function () {
+  const input = document.getElementById('input-text');
+  const output = document.getElementById('output-text');
+  const status = document.getElementById('tool-status');
+  const algo = document.getElementById('algo');
+  const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
+  document.getElementById('hash-btn').addEventListener('click', async () => {
+    if (!input.value) { set(false, 'Enter some text to hash.'); return; }
+    try {
+      const hex = await TB.sha(algo.value, input.value);
+      output.textContent = hex;
+      set(true, '✓ ' + algo.value + ' · ' + hex.length * 4 + '-bit digest');
+    } catch (e) { set(false, '✗ ' + e.message); }
+  });
+  input.addEventListener('input', () => { if (!input.value) { output.textContent = ''; status.textContent = ''; status.className = 'status'; } });
+};
+</script>
+</body>
+</html>

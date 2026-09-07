@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Encode and decode Base64 instantly in your browser. Full Unicode support, URL-safe option, nothing uploaded.">
+<title>Base64 Encoder — ToolBots</title>
+<link rel="canonical" href="https://toolbots.xyz/tools/base64/">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script type="application/ld+json" class="tb-tool">
+{"name":"Base64 Encoder","description":"Encode text to Base64 or decode Base64 back to text — instantly, in your browser, with full Unicode support.","inputElement":"input-text","outputElement":"output-text","faq":[
+["Does it support emoji and non-Latin text?","Yes. The tool encodes UTF-8 bytes, so emoji, accented characters, and scripts like Japanese or Arabic round-trip perfectly."],
+["What is URL-safe Base64?","A variant that replaces + with - and / with _ so the output can be used in URLs and filenames. Tick the checkbox to use it."],
+["Can it decode files or images?","This tool works on text. Decode a Base64 string back to the text it represents; binary-to-image decoding is on the roadmap."]]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/><rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/><circle cx="12" cy="16.5" r="2" fill="#0b1020"/></svg></span>ToolBots<span class="tld">.xyz</span></a>
+    <nav class="main-nav" aria-label="Main"><a href="/#tools" class="nav-link">Tools</a><a href="/#about" class="nav-link">About</a><span class="nav-bits">Esc = clear</span></nav>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap tool-head">
+    <p class="crumb"><a href="/">ToolBots</a> / <span data-tb="crumb-name"></span></p>
+    <h1 data-tb="page-title"></h1>
+    <p class="lede" data-tb="lede"></p>
+  </div>
+  <div class="wrap">
+    <div class="workbench">
+      <div><label for="input-text">Input</label>
+        <textarea id="input-text" spellcheck="false" placeholder="Type text to encode, or paste Base64 to decode…"></textarea></div>
+      <div class="wb-row actions wb-btns">
+        <button id="encode-btn" class="btn-sm primary">Encode →</button>
+        <button id="decode-btn" class="btn-sm primary">← Decode</button>
+        <button id="copy-btn" data-tb="copy-btn" class="btn-sm ghost">Copy</button>
+        <button id="clear-btn" data-tb="clear-btn" class="btn-sm ghost">Clear</button>
+      </div>
+      <div class="wb-row"><label class="checkbox-line"><input type="checkbox" id="urlsafe"> URL-safe alphabet ( - and _ instead of + and / )</label></div>
+      <div id="tool-status" class="status" role="status" aria-live="polite"></div>
+      <div><label for="output-text">Output</label>
+        <textarea id="output-text" readonly spellcheck="false" placeholder="Result appears here…"></textarea></div>
+    </div>
+    <div class="tool-docs">
+      <h2>How it works</h2>
+      <p><strong>Encode</strong> converts your text to UTF-8 bytes and then to Base64. <strong>Decode</strong> reverses the process —
+      whitespace in the input is ignored, and invalid Base64 is reported instead of silently producing garbage.</p>
+      <h2>Privacy</h2>
+      <p>Encoding and decoding happen entirely in your browser. Nothing is transmitted, logged, or stored.</p>
+    </div>
+    <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand"><span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span><p>Free, private, bot-run browser tools.</p></div>
+    <nav class="footer-col" aria-label="Tools"><h4>Tools</h4><a href="/tools/json/">JSON formatter</a><a href="/tools/base64/">Base64 encoder</a><a href="/tools/hash/">SHA-256 hasher</a><a href="/tools/text-case/">Text case converter</a><a href="/tools/uuid/">UUID generator</a><a href="/tools/color/">Color inspector</a></nav>
+    <nav class="footer-col" aria-label="Site"><h4>Site</h4><a href="/#about">About</a><a href="/llms.txt">llms.txt</a><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">Sitemap</a><a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a></nav>
+    <div class="footer-col footer-meta"><h4>Status</h4><p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p><p class="fineprint">© 2026 ToolBots · Public source · No tracking</p></div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+</footer>
+<script src="/assets/js/app.js" defer></script>
+<script>
+window.tbInit = function () {
+  const input = document.getElementById('input-text');
+  const output = document.getElementById('output-text');
+  const status = document.getElementById('tool-status');
+  const urlsafe = document.getElementById('urlsafe');
+  const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
+  const encode = (str) => {
+    const bytes = new TextEncoder().encode(str);
+    let bin = ''; const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    let b64 = btoa(bin);
+    if (urlsafe.checked) b64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return b64;
+  };
+  const decode = (b64) => {
+    let s = b64.trim().replace(/\s+/g, '');
+    if (urlsafe.checked || /[-_]/.test(s)) s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const bin = atob(s);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  };
+  document.getElementById('encode-btn').addEventListener('click', () => {
+    if (!input.value) { set(false, 'Nothing to encode.'); return; }
+    try { output.value = encode(input.value); set(true, '✓ Encoded · ' + output.value.length + ' Base64 characters'); }
+    catch (e) { set(false, '✗ ' + e.message); }
+  });
+  document.getElementById('decode-btn').addEventListener('click', () => {
+    if (!input.value.trim()) { set(false, 'Nothing to decode.'); return; }
+    try { output.value = decode(input.value); set(true, '✓ Decoded · ' + new TextEncoder().encode(output.value).length + ' bytes'); }
+    catch (e) { set(false, '✗ Not valid Base64 — check the input.'); }
+  });
+};
+</script>
+</body>
+</html>
