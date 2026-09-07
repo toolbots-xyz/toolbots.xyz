@@ -55,6 +55,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Exclude non-site files from artifact
+        run: rm -rf tests tools/*/logic.js docs *.md LICENSE
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
