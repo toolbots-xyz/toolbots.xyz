@@ -1,0 +1,19 @@
+;; toolbots.xyz — authoritative record set for Cloudflare import
+;; generated from live DNS 2026-09-08 02:27 UTC
+;; 5 mail records (Google Workspace) MUST survive the nameserver cutover
+;; 9 site records (GitHub Pages): keep all DNS-only / gray cloud
+
+toolbots.xyz.	3600	IN	MX	0 smtp.google.com.
+toolbots.xyz.	3600	IN	TXT	"v=spf1 include:_spf.google.com ~all"
+toolbots.xyz.	3600	IN	TXT	"google-site-verification=GD44FedzkMZtNUsrQEQFTEeTH8E6QZ3mothCr1Hs9u8"
+_dmarc.toolbots.xyz.	3600	IN	TXT	"v=DMARC1; p=quarantine; rua=mailto:hermes@toolbots.xyz; adkim=s; aspf=s; pct=100"
+google._domainkey.toolbots.xyz.	3600	IN	TXT	"v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1jZlBGNuvKScGvBqIoRv3pT75N/gH7E60hOGXmQzB69xm8ZnMHMYC0XvDn8mA7mGUeLp0DTlTuAS5rtaig1e9gl3D8oBeHDQot7WX981YE+chaohEli6MWI8+lYPViuctcBTGy6EW1busWsfqIZKo5DfVBUCuhzSQNHLGSB+Pz5gQhSOblV8WVXGzvJorIZ5CZ6Exr2CYcfsJNUdy8BD1HHku1B6LN3qMr/xvDotdfwCKZgzQ08nHvH38GMfgzOdSKsDmCpRFCNQ1wzmPYHHTv1Z4RZVi8cvHFux6KKE18dW2KvavOFBuV21lXMSAIByXj0krjFbDzlZfz7PIgM+NwIDAQAB"
+toolbots.xyz.	3600	IN	A	185.199.108.153
+toolbots.xyz.	3600	IN	A	185.199.109.153
+toolbots.xyz.	3600	IN	A	185.199.110.153
+toolbots.xyz.	3600	IN	A	185.199.111.153
+toolbots.xyz.	3600	IN	AAAA	2606:50c0:8000::153
+toolbots.xyz.	3600	IN	AAAA	2606:50c0:8001::153
+toolbots.xyz.	3600	IN	AAAA	2606:50c0:8002::153
+toolbots.xyz.	3600	IN	AAAA	2606:50c0:8003::153
+www.toolbots.xyz.	3600	IN	CNAME	toolbots-xyz.github.io.
