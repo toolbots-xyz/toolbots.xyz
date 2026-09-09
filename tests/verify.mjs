@@ -269,6 +269,7 @@ const b64urlObj = (o) => {
   bytes.forEach((b) => { bin += String.fromCharCode(b); });
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
+const H = b64urlObj({ alg: 'HS256', typ: 'JWT' });
 test('decodes the canonical example token', () => {
   const r = W.decode(JWT_TOKEN);
   assert.deepStrictEqual(r.header, { alg: 'HS256', typ: 'JWT' });
@@ -282,7 +283,7 @@ test('tolerates Bearer prefix, whitespace, and newlines', () => {
 });
 test('decodes unicode payloads (UTF-8: emoji, CJK, combining marks)', () => {
   const payload = { name: 'é🎉中文e\u0301', note: '制限あり 🔐' };
-  const token = b64urlObj({ alg: 'HS256', typ: 'JWT' }) + '.' + b64urlObj(payload) + '.c2ln';
+  const token = b64urlObj({ alg: 'HS256', typ: 'JWT' }) + '.' + b64urlObj(payload) + '.' + 'A'.repeat(43);
   const r = W.decode(token);
   assert.deepStrictEqual(r.payload, payload);
 });
@@ -305,18 +306,43 @@ test('rejects empty segments', () => {
 });
 test('rejects invalid JSON and non-object JSON', () => {
   const badB64 = (s) => Buffer.from(s).toString('base64url');
-  assert.throws(() => W.decode(badB64('not-json') + '.' + b64urlObj({ a: 1 }) + '.s'), /Header is not valid JSON/);
-  assert.throws(() => W.decode(b64urlObj({ alg: 'HS256' }) + '.' + badB64('[1,2,3]') + '.s'), /Payload must be a JSON object/);
-  assert.throws(() => W.decode(b64urlObj({ alg: 'HS256' }) + '.' + badB64('"str"') + '.s'), /Payload must be a JSON object/);
+  const SIG = 'A'.repeat(43); // real-length signature so validation reaches the JSON checks
+  assert.throws(() => W.decode(badB64('not-json') + '.' + b64urlObj({ a: 1 }) + '.' + SIG), /Header is not valid JSON/);
+  assert.throws(() => W.decode(b64urlObj({ alg: 'HS256' }) + '.' + badB64('[1,2,3]') + '.' + SIG), /Payload must be a JSON object/);
+  assert.throws(() => W.decode(b64urlObj({ alg: 'HS256' }) + '.' + badB64('"str"') + '.' + SIG), /Payload must be a JSON object/);
 });
 test('oversized input is rejected without decoding', () => {
   const big = 'e'.repeat(1000001);
   assert.throws(() => W.decode(big), /Token too large/);
 });
-test('boundary: just under the 1,000,000-char limit decodes fine', () => {
-  const payload = { pad: 'x'.repeat(1000) };
-  const tok = b64urlObj({ alg: 'HS256' }) + '.' + b64urlObj(payload) + '.' + 's'.repeat(994000);
-  const r = W.decode(tok); // ~996,000 chars total — under the limit
+test('signature syntax is validated: bad alphabet, too short, too long all rejected', () => {
+  assert.throws(() => W.decode(H + '.e30.%%%'), /Segment 3 .*not valid Base64URL/);
+  assert.throws(() => W.decode(H + '.e30.a'), /Segment 3 .*not valid Base64URL/); // 1 char = incomplete b64
+  assert.throws(() => W.decode(H + '.e30.ab'), /too short to be a real signature/); // 1 byte < 16
+  assert.throws(() => W.decode(H + '.e30.' + 'A'.repeat(4100)), /implausibly long/);
+  const r = W.decode(H + '.e30.' + Buffer.from(new Uint8Array(32).fill(7)).toString('base64url'));
+  assert.strictEqual(r.unsecured, false); // real-length sig accepted (syntax only)
+});
+test('empty signature policy: rejected unless header declares alg "none"', () => {
+  assert.throws(() => W.decode(H + '.e30.'), /empty signature is only valid for unsecured tokens with alg "none"/);
+  const r = W.decode(b64urlObj({ alg: 'none' }) + '.e30.');
+  assert.strictEqual(r.unsecured, true);
+  assert.strictEqual(r.signatureB64, '');
+  assert.deepStrictEqual(r.header, { alg: 'none' });
+});
+test('invalid UTF-8 in payload or header is fatal (no silent U+FFFD)', () => {
+  const ff = Buffer.from([0xff]).toString('base64url');
+  assert.throws(() => W.decode(H + '.' + ff + '.sig'), /Segment 2 \(payload\) is not valid UTF-8/);
+  assert.throws(() => W.decode(ff + '.' + b64urlObj({ a: 1 }) + '.s'), /Segment 1 \(header\) is not valid UTF-8/);
+  const mixed = Buffer.concat([Buffer.from('{"a":"x"}', 'utf8'), Buffer.from([0xff])]).toString('base64url');
+  assert.throws(() => W.decode(H + '.' + mixed + '.s'), /not valid UTF-8/);
+});
+test('boundary: token just under the 1,000,000-char input limit decodes fine', () => {
+  // header (~43) + payload b64url (~998,680) + sig (43) + 2 dots ≈ 998,768 total
+  const payload = { pad: 'x'.repeat(749000) };
+  const tok = b64urlObj({ alg: 'HS256' }) + '.' + b64urlObj(payload) + '.' + 'A'.repeat(43);
+  assert.ok(tok.length < 1000000 && tok.length > 990000, `token length ${tok.length} not in boundary range`);
+  const r = W.decode(tok);
   assert.strictEqual(typeof r.payload.pad, 'string');
 });
 test('claimsInfo renders iat/nbf/exp rows with UTC detail; skips absent; flags non-numeric', () => {

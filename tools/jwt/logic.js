@@ -5,18 +5,30 @@
 'use strict';
 
 (function () {
-  /* Base64URL -> UTF-8 string. Accepts unpadded or padded input; throws on bad alphabet. */
-  const fromB64Url = (s) => {
+  /* Base64URL -> raw bytes. Accepts unpadded or padded input; throws on bad alphabet. */
+  const fromB64UrlBytes = (s) => {
     if (!/^[A-Za-z0-9_-]*$/.test(s)) throw new Error('invalid base64url');
     let t = s.replace(/-/g, '+').replace(/_/g, '/');
     while (t.length % 4) t += '=';
     const bin = atob(t);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
+    return bytes;
+  };
+
+  /* bytes -> UTF-8 string. FATAL: invalid sequences throw instead of silently
+     replacing with U+FFFD. */
+  const decodeText = (bytes) => {
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+    catch { throw new Error('invalid UTF-8'); }
   };
 
   const SEGMENT_NAMES = ['header', 'payload', 'signature'];
+  /* Signature plausibility bounds (syntax only — says nothing about authenticity):
+     no real JWS MAC/signature scheme emits fewer than 128 bits (16 bytes) or more
+     than RS4096's ~786 chars; anything outside is treated as malformed input. */
+  const SIG_MIN_BYTES = 16;
+  const SIG_MAX_CHARS = 4096;
 
   /* decode('eyJhbGciOi...') -> { header, payload, signatureB64, headerB64, payloadB64 }
      Throws Error with a human-readable message on any malformed input. */
@@ -34,14 +46,50 @@
         parts.length + '. Encrypted (JWE) tokens have 5 segments and cannot be decoded here.');
     }
 
-    const segment = (str, n) => {
-      if (!str) throw new Error('Segment ' + n + ' (' + SEGMENT_NAMES[n - 1] + ') is empty.');
-      try { return fromB64Url(str); }
-      catch { throw new Error('Segment ' + n + ' (' + SEGMENT_NAMES[n - 1] + ') is not valid Base64URL.'); }
-    };
+    const headerText = (() => {
+      if (!parts[0]) throw new Error('Segment 1 (header) is empty.');
+      try { return decodeText(fromB64UrlBytes(parts[0])); }
+      catch (e) {
+        if (e.message === 'invalid UTF-8') throw new Error('Segment 1 (header) is not valid UTF-8.');
+        throw new Error('Segment 1 (header) is not valid Base64URL.');
+      }
+    })();
+    const payloadText = (() => {
+      if (!parts[1]) throw new Error('Segment 2 (payload) is empty.');
+      try { return decodeText(fromB64UrlBytes(parts[1])); }
+      catch (e) {
+        if (e.message === 'invalid UTF-8') throw new Error('Segment 2 (payload) is not valid UTF-8.');
+        throw new Error('Segment 2 (payload) is not valid Base64URL.');
+      }
+    })();
 
-    const headerText = segment(parts[0], 1);
-    const payloadText = segment(parts[1], 2);
+    /* Signature: validate SYNTAX ONLY (encoding + plausible length). This says
+       nothing about authenticity — a syntactically valid signature is still
+       unverified. Policy for an empty signature: rejected UNLESS the header
+       explicitly declares alg "none" (the JWS "unsecured token" case), which
+       is accepted but flagged so the UI can warn loudly. */
+    const sigRaw = parts[2];
+    let unsecured = false;
+    if (sigRaw === '') {
+      const alg = (() => { try { return JSON.parse(headerText).alg; } catch { return undefined; } })();
+      if (alg === 'none') {
+        unsecured = true; // alg:none — structurally complete, cryptographically unsecured
+      } else {
+        throw new Error('Segment 3 (signature) is empty. An empty signature is only valid for unsecured tokens with alg "none" — this token does not declare that.');
+      }
+    } else {
+      let sigBytes;
+      try { sigBytes = fromB64UrlBytes(sigRaw); }
+      catch {
+        throw new Error('Segment 3 (signature) is not valid Base64URL. (Syntax is checked here — authenticity is never verified by this tool.)');
+      }
+      if (sigBytes.length < SIG_MIN_BYTES) {
+        throw new Error('Segment 3 (signature) is too short to be a real signature (fewer than ' + SIG_MIN_BYTES + ' bytes).');
+      }
+      if (sigRaw.length > SIG_MAX_CHARS) {
+        throw new Error('Segment 3 (signature) is implausibly long for any real JWS algorithm (over ' + SIG_MAX_CHARS + ' characters).');
+      }
+    }
 
     const parseJson = (text, n) => {
       let value;
@@ -62,7 +110,8 @@
       payload,
       headerB64: parts[0],
       payloadB64: parts[1],
-      signatureB64: parts[2],
+      signatureB64: sigRaw,
+      unsecured, // true only for alg:"none" empty-signature tokens
     };
   };
 
