@@ -3,15 +3,17 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  # main keeps the documented `pages` group; PRs get their own per-PR group
+  # so PR checks can never cancel or collide with production deploys.
+  group: ${{ github.event_name == 'pull_request' && format('pr-checks-{0}', github.event.pull_request.number) || 'pages' }}
   cancel-in-progress: true
 
 jobs:
@@ -19,6 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Node QA suite (structure + logic + privacy)
+        run: node tests/verify.mjs
+      - name: Privacy negative fixtures (gate must fail on violations)
+        run: node tests/privacy-negative.mjs
       - name: HTML sanity checks
         run: |
           set -e
@@ -31,13 +40,11 @@ jobs:
             grep -q 'data-tb="clear-btn"' "$f" || { echo "MISSING clear-btn: $f"; fail=1; }
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8').match(/<script type=\"application\/ld\+json\" class=\"tb-tool\">([\s\S]*?)<\/script>/)[1])" || { echo "BAD JSON-LD: $f"; fail=1; }
           done
-          # privacy regression gate: served pages must reference zero third-party resources
-          if grep -n -iE 'cloudflareinsights|data-cf-beacon|googletagmanager|google-analytics|googlesyndication|doubleclick\.net|plausible\.io|usefathom|posthog\.com' index.html 404.html tools/*/index.html; then
-            echo "THIRD-PARTY RESOURCE REFERENCE FOUND (privacy regression)"; fail=1
-          fi
-          # every script src must be same-origin relative (no external scripts)
-          if grep -nE '<script[^>]*src="https?://' index.html 404.html tools/*/index.html; then
-            echo "EXTERNAL SCRIPT SRC FOUND (privacy regression)"; fail=1
+          # belt-and-braces privacy grep (Node suite is authoritative): any
+          # http(s)/protocol-relative src on script/img/iframe/link/source/track
+          # or an object data attribute, in any quote style or letter case.
+          if grep -nEi '<(script|img|iframe|source|track|embed)[^>]*\ssrc\s*=\s*("|\x27)?(https?:)?//|<object[^>]*\sdata\s*=\s*("|\x27)?(https?:)?//' index.html 404.html tools/*/index.html; then
+            echo "NON-SAME-ORIGIN RESOURCE REFERENCE FOUND (privacy regression)"; fail=1
           fi
           # homepage registry, sitemap, and footer must agree on the tool list
           node -e "
@@ -57,7 +64,13 @@ jobs:
           [ $fail -eq 0 ] && echo "All checks passed." || exit 1
   deploy:
     needs: check
+    # Deploy ONLY production: main push or manual run against main.
+    # PR runs execute check-only — they can never deploy.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
