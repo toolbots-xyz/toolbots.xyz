@@ -258,6 +258,29 @@ test('round-trip hex → rgb → hex for 20 random colors', () => {
   }
 });
 
+/* ================= PRIVACY: no third-party resources ================= */
+
+import { resourceViolations, includesAppJs, TRACKER_RE, SITE_ORIGIN } from './lib/privacy.mjs';
+
+const SERVED_PAGES = ['index.html', '404.html', ...TOOL_PATHS.map((t) => `${t}index.html`)];
+
+startGroup('privacy: served pages auto-load zero non-same-origin resources');
+for (const page of SERVED_PAGES) {
+  const html = read(page);
+  const base = `${SITE_ORIGIN}/${page}`;
+  test(`no analytics/tracker references (${page})`, () => {
+    assert.ok(!TRACKER_RE.test(html), 'third-party analytics reference found');
+  });
+  test(`every auto-loaded resource resolves to ${SITE_ORIGIN} (${page})`, () => {
+    const v = resourceViolations(html, base);
+    assert.deepStrictEqual(v, [], `non-same-origin auto-loaded resources:\n  ${v.join('\n  ')}`);
+  });
+  test(`app.js include present and same-origin (${page})`, () => {
+    if (page === '404.html') return; // 404 is intentionally script-free
+    assert.ok(includesAppJs(html, base), 'page must load /assets/js/app.js');
+  });
+}
+
 /* ---------- summary ---------- */
 line(`\n===== ${passed} passed, ${failed} failed =====`);
 if (failed > 0) { line('Failed groups:'); for (const f of failures) line(`  - ${f}`); }
