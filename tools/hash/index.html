@@ -10,9 +10,24 @@
 <link rel="stylesheet" href="/assets/css/style.css">
 <script type="application/ld+json" class="tb-tool">
 {"name":"SHA-256 Hasher","description":"Compute SHA-1, SHA-256, SHA-384, or SHA-512 hashes of any text instantly in your browser via the Web Crypto API.","inputElement":"input-text","outputElement":"output-text","faq":[
+["Does this tool upload my text?","No. Hashing is performed locally via the Web Crypto API. Unlike many online hash tools, no text is ever submitted to a server."],
+["How do I verify a SHA-256 checksum for text?","Hash the original text here and compare the 64-character hex digest with the published one, character by character. For example, hello always hashes to 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824. If they differ, the content was altered."],
 ["Is hashing here safe for passwords?","The hash is computed on your device, so the plaintext never leaves it — but remember that a plain SHA hash is not password storage. Use a proper password manager or argon2/bcrypt for that."],
 ["What is the difference between the algorithms?","They differ in digest length and collision resistance: SHA-1 (160-bit) is legacy and deprecated for security use; SHA-256 and above are current standards."],
 ["Can I hash files?","File hashing is on the roadmap. For now this tool hashes text input only."]]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Does this tool upload my text?", "acceptedAnswer": {"@type": "Answer", "text": "No. Hashing is performed locally via the Web Crypto API. Unlike many online hash tools, no text is ever submitted to a server."}},
+    {"@type": "Question", "name": "How do I verify a SHA-256 checksum for text?", "acceptedAnswer": {"@type": "Answer", "text": "Hash the original text here and compare the 64-character hex digest with the published one, character by character. For example, hello always hashes to 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824. If they differ, the content was altered."}},
+    {"@type": "Question", "name": "Is hashing here safe for passwords?", "acceptedAnswer": {"@type": "Answer", "text": "The hash is computed on your device, so the plaintext never leaves it — but remember that a plain SHA hash is not password storage. Use a proper password manager or argon2/bcrypt for that."}},
+    {"@type": "Question", "name": "What is the difference between the algorithms?", "acceptedAnswer": {"@type": "Answer", "text": "They differ in digest length and collision resistance: SHA-1 (160-bit) is legacy and deprecated for security use; SHA-256 and above are current standards."}},
+    {"@type": "Question", "name": "Can I hash files?", "acceptedAnswer": {"@type": "Answer", "text": "File hashing is on the roadmap. For now this tool hashes text input only."}}
+  ]
+}
 </script>
 </head>
 <body>

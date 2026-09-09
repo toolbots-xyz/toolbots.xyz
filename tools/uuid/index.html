@@ -10,9 +10,22 @@
 <link rel="stylesheet" href="/assets/css/style.css">
 <script type="application/ld+json" class="tb-tool">
 {"name":"UUID Generator","description":"Generate up to 500 random version-4 UUIDs at once, using your browser's cryptographic random number generator.","inputElement":"uuid-count","outputElement":"output-text","faq":[
-["What is a UUID v4?","A 128-bit identifier generated from random numbers — 122 random bits, giving a collision probability so low it is effectively zero for any practical use."],
+["Does this tool store or upload the UUIDs I generate?","No. Generation happens on your device with your browser's cryptographic random number generator — nothing is logged or transmitted, and refreshing the page discards them forever."],
+["What is a UUID v4?","A 128-bit identifier generated from random numbers — 122 random bits, giving a collision probability so low it is effectively zero for any practical use. It looks like ead06c6a-84b6-4f9d-ac6e-c63487ed212d: five groups of hex digits."],
 ["How random are these?","They come from your browser's crypto.getRandomValues(), the operating system's cryptographic random source — not a Math.random() shortcut."],
 ["Uppercase or braces?","Tick the options to emit uppercase or wrap each UUID in braces {…}, as some Windows and Microsoft tools expect."]]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Does this tool store or upload the UUIDs I generate?", "acceptedAnswer": {"@type": "Answer", "text": "No. Generation happens on your device with your browser's cryptographic random number generator — nothing is logged or transmitted, and refreshing the page discards them forever."}},
+    {"@type": "Question", "name": "What is a UUID v4?", "acceptedAnswer": {"@type": "Answer", "text": "A 128-bit identifier generated from random numbers — 122 random bits, giving a collision probability so low it is effectively zero for any practical use. It looks like ead06c6a-84b6-4f9d-ac6e-c63487ed212d: five groups of hex digits."}},
+    {"@type": "Question", "name": "How random are these?", "acceptedAnswer": {"@type": "Answer", "text": "They come from your browser's crypto.getRandomValues(), the operating system's cryptographic random source — not a Math.random() shortcut."}},
+    {"@type": "Question", "name": "Uppercase or braces?", "acceptedAnswer": {"@type": "Answer", "text": "Tick the options to emit uppercase or wrap each UUID in braces {…}, as some Windows and Microsoft tools expect."}}
+  ]
+}
 </script>
 </head>
 <body>
