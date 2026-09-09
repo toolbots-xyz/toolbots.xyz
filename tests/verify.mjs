@@ -315,13 +315,20 @@ test('oversized input is rejected without decoding', () => {
   const big = 'e'.repeat(1000001);
   assert.throws(() => W.decode(big), /Token too large/);
 });
-test('signature syntax is validated: bad alphabet, too short, too long all rejected', () => {
+test('signature syntax is base64url-strict; no guessed plausibility bounds', () => {
   assert.throws(() => W.decode(H + '.e30.%%%'), /Segment 3 .*not valid Base64URL/);
   assert.throws(() => W.decode(H + '.e30.a'), /Segment 3 .*not valid Base64URL/); // 1 char = incomplete b64
-  assert.throws(() => W.decode(H + '.e30.ab'), /too short to be a real signature/); // 1 byte < 16
-  assert.throws(() => W.decode(H + '.e30.' + 'A'.repeat(4100)), /implausibly long/);
+  // short-but-valid signatures decode (decode-only; no authenticity judgement)
+  const shortSig = W.decode(H + '.e30.ab');
+  assert.strictEqual(shortSig.signatureB64, 'ab');
+  assert.strictEqual(shortSig.unsecured, false);
+  // very long (still valid base64url) signature decodes; the 1M input cap is the only size bound
+  const longSig = 'A'.repeat(4100);
+  const long = W.decode(H + '.e30.' + longSig);
+  assert.strictEqual(long.signatureB64, longSig);
+  // a real-length HS256 signature still decodes fine
   const r = W.decode(H + '.e30.' + Buffer.from(new Uint8Array(32).fill(7)).toString('base64url'));
-  assert.strictEqual(r.unsecured, false); // real-length sig accepted (syntax only)
+  assert.strictEqual(r.unsecured, false);
 });
 test('empty signature policy: rejected unless header declares alg "none"', () => {
   assert.throws(() => W.decode(H + '.e30.'), /empty signature is only valid for unsecured tokens with alg "none"/);
@@ -329,6 +336,23 @@ test('empty signature policy: rejected unless header declares alg "none"', () =>
   assert.strictEqual(r.unsecured, true);
   assert.strictEqual(r.signatureB64, '');
   assert.deepStrictEqual(r.header, { alg: 'none' });
+});
+test('alg:none contradiction: nonempty signature with alg "none" is malformed', () => {
+  assert.throws(() => W.decode(b64urlObj({ alg: 'none' }) + '.e30.' + 'A'.repeat(43)),
+    /alg "none" .*but the token carries a signature/);
+  // even a short nonempty signature contradicts alg:none
+  assert.throws(() => W.decode(b64urlObj({ alg: 'none' }) + '.e30.ab'),
+    /alg "none" .*but the token carries a signature/);
+});
+test('short valid byte-signature round-trips (e.g. 16 bytes) without plausibility gating', () => {
+  const sig16 = Buffer.from(new Uint8Array(16).fill(0x2a)).toString('base64url');
+  const r = W.decode(H + '.' + b64urlObj({ ok: 1 }) + '.' + sig16);
+  assert.strictEqual(r.signatureB64, sig16);
+  assert.strictEqual(r.unsecured, false);
+  // single valid byte (1 char padded to 2 b64url chars is invalid; 2 chars = 1 byte) is fine syntactically
+  const oneByte = Buffer.from([0xff & 0x7f]).toString('base64url'); // 'AQ' style, 2 chars
+  const r1 = W.decode(H + '.e30.' + oneByte);
+  assert.strictEqual(r1.unsecured, false);
 });
 test('invalid UTF-8 in payload or header is fatal (no silent U+FFFD)', () => {
   const ff = Buffer.from([0xff]).toString('base64url');

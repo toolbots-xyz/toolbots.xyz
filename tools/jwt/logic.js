@@ -24,11 +24,9 @@
   };
 
   const SEGMENT_NAMES = ['header', 'payload', 'signature'];
-  /* Signature plausibility bounds (syntax only — says nothing about authenticity):
-     no real JWS MAC/signature scheme emits fewer than 128 bits (16 bytes) or more
-     than RS4096's ~786 chars; anything outside is treated as malformed input. */
-  const SIG_MIN_BYTES = 16;
-  const SIG_MAX_CHARS = 4096;
+  /* Signature checks are SYNTAX-ONLY: strict base64url alphabet (enforced by
+     fromB64UrlBytes). No guessed plausibility bounds — signatures of any valid
+     base64url length are decoded; the overall token size cap still applies. */
 
   /* decode('eyJhbGciOi...') -> { header, payload, signatureB64, headerB64, payloadB64 }
      Throws Error with a human-readable message on any malformed input. */
@@ -63,31 +61,27 @@
       }
     })();
 
-    /* Signature: validate SYNTAX ONLY (encoding + plausible length). This says
-       nothing about authenticity — a syntactically valid signature is still
-       unverified. Policy for an empty signature: rejected UNLESS the header
-       explicitly declares alg "none" (the JWS "unsecured token" case), which
-       is accepted but flagged so the UI can warn loudly. */
+    /* Signature: validate SYNTAX ONLY (strict base64url). This says nothing
+       about authenticity — a syntactically valid signature is still unverified.
+       Empty-signature policy: permitted ONLY with header alg "none" (the JWS
+       unsecured case) and flagged unsecured so the UI can warn loudly.
+       Contradiction guard: alg "none" WITH a nonempty signature is malformed —
+       alg "none" forbids signatures by definition. */
     const sigRaw = parts[2];
     let unsecured = false;
+    const headerAlg = (() => { try { return JSON.parse(headerText).alg; } catch { return undefined; } })();
     if (sigRaw === '') {
-      const alg = (() => { try { return JSON.parse(headerText).alg; } catch { return undefined; } })();
-      if (alg === 'none') {
+      if (headerAlg === 'none') {
         unsecured = true; // alg:none — structurally complete, cryptographically unsecured
       } else {
         throw new Error('Segment 3 (signature) is empty. An empty signature is only valid for unsecured tokens with alg "none" — this token does not declare that.');
       }
+    } else if (headerAlg === 'none') {
+      throw new Error('Malformed token: header declares alg "none" (no signature allowed) but the token carries a signature. Either the alg or the signature is wrong.');
     } else {
-      let sigBytes;
-      try { sigBytes = fromB64UrlBytes(sigRaw); }
+      try { fromB64UrlBytes(sigRaw); }
       catch {
         throw new Error('Segment 3 (signature) is not valid Base64URL. (Syntax is checked here — authenticity is never verified by this tool.)');
-      }
-      if (sigBytes.length < SIG_MIN_BYTES) {
-        throw new Error('Segment 3 (signature) is too short to be a real signature (fewer than ' + SIG_MIN_BYTES + ' bytes).');
-      }
-      if (sigRaw.length > SIG_MAX_CHARS) {
-        throw new Error('Segment 3 (signature) is implausibly long for any real JWS algorithm (over ' + SIG_MAX_CHARS + ' characters).');
       }
     }
 
