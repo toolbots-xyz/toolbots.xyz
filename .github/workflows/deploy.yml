@@ -31,6 +31,14 @@ jobs:
             grep -q 'data-tb="clear-btn"' "$f" || { echo "MISSING clear-btn: $f"; fail=1; }
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8').match(/<script type=\"application\/ld\+json\" class=\"tb-tool\">([\s\S]*?)<\/script>/)[1])" || { echo "BAD JSON-LD: $f"; fail=1; }
           done
+          # privacy regression gate: served pages must reference zero third-party resources
+          if grep -n -iE 'cloudflareinsights|data-cf-beacon|googletagmanager|google-analytics|googlesyndication|doubleclick\.net|plausible\.io|usefathom|posthog\.com' index.html 404.html tools/*/index.html; then
+            echo "THIRD-PARTY RESOURCE REFERENCE FOUND (privacy regression)"; fail=1
+          fi
+          # every script src must be same-origin relative (no external scripts)
+          if grep -nE '<script[^>]*src="https?://' index.html 404.html tools/*/index.html; then
+            echo "EXTERNAL SCRIPT SRC FOUND (privacy regression)"; fail=1
+          fi
           # homepage registry, sitemap, and footer must agree on the tool list
           node -e "
             const fs = require('fs');

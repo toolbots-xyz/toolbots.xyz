@@ -258,6 +258,38 @@ test('round-trip hex → rgb → hex for 20 random colors', () => {
   }
 });
 
+/* ================= PRIVACY: no third-party resources ================= */
+
+const SERVED_PAGES = ['index.html', '404.html', ...TOOL_PATHS.map((t) => `${t}index.html`)];
+/* known analytics/tracking hosts — this list is the regression gate for the
+   2026-09 beacon incident; extend it if a new tracker shows up */
+const TRACKER_RE = /cloudflareinsights|data-cf-beacon|googletagmanager|google-analytics|googlesyndication|doubleclick\.net|plausible\.io|usefathom|posthog\.com|matomo\.(js|php)/i;
+
+startGroup('privacy: served pages carry zero third-party resources');
+for (const page of SERVED_PAGES) {
+  const html = read(page);
+  test(`no analytics/beacon references (${page})`, () => {
+    assert.ok(!TRACKER_RE.test(html), 'third-party analytics reference found');
+  });
+  test(`every <script src> is same-origin relative (${page})`, () => {
+    const srcs = [...html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']*)["']/g)].map((m) => m[1]);
+    if (page !== '404.html') {
+      assert.ok(srcs.length > 0, 'no scripts found — page must include app.js');
+    } // 404.html is intentionally script-free
+    for (const s of srcs) {
+      assert.ok(!/^https?:\/\//i.test(s), `external script src not allowed: ${s}`);
+    }
+  });
+  test(`every loaded resource URL is same-origin (${page})`, () => {
+    for (const m of html.matchAll(/\b(?:src|href)\s*=\s*["']([^"']*)["']/g)) {
+      const url = m[1];
+      if (!/^https?:\/\//i.test(url)) continue; // relative/fragment — same-origin by construction
+      assert.ok(url.startsWith('https://toolbots.xyz/') || url.startsWith('https://github.com/toolbots-xyz/'),
+        `unexpected external resource URL: ${url}`);
+    }
+  });
+}
+
 /* ---------- summary ---------- */
 line(`\n===== ${passed} passed, ${failed} failed =====`);
 if (failed > 0) { line('Failed groups:'); for (const f of failures) line(`  - ${f}`); }
