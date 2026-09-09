@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Decode a JWT (JSON Web Token) to inspect its header, payload, and timestamp claims — entirely in your browser, nothing uploaded.">
+<title>JWT Decoder — ToolBots</title>
+<link rel="canonical" href="./">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script type="application/ld+json" class="tb-tool">
+{"name":"JWT Decoder","description":"Decode a JSON Web Token (JWT) to inspect its header, payload, and timestamp claims — entirely in your browser, nothing uploaded.","inputElement":"input-text","outputElement":"output-text","faq":[
+["Does this tool verify the token's signature?","No — by design, not by limitation. Client-side verification is possible for RS/ES/PS signatures (the issuer's public key is meant to be public, and browsers can verify via WebCrypto); HS* verification would require the issuer's secret key, which must never reach a client. This tool chooses the simpler decode-only contract so you can inspect claims without handling keys at all — verification belongs in your backend or a JWT library."],
+["Is it safe to paste a real token here?","Yes. Everything runs locally in your browser — the token is never transmitted, logged, or stored. Treat tokens as bearer credentials regardless: never share a live one anywhere."],
+["Why does my token show an error?","The tool accepts standard JWS tokens (header.payload.signature). Encrypted JWE tokens (5 segments) contain no readable claims; truncated or edited tokens fail strict Base64URL, UTF-8, or JSON parsing; and signatures are syntax-checked only (strict Base64URL — no authenticity judgement, any valid-alphabet signature length decodes). An empty signature is accepted solely for unsecured alg \"none\" tokens, which are prominently flagged as providing no authenticity; alg \"none\" together with a nonempty signature is rejected as malformed. The error message tells you which segment and why."]]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/><rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/><circle cx="12" cy="16.5" r="2" fill="#0b1020"/></svg></span>ToolBots<span class="tld">.xyz</span></a>
+    <nav class="main-nav" aria-label="Main"><a href="/#tools" class="nav-link">Tools</a><a href="/#about" class="nav-link">About</a><span class="nav-bits">Esc = clear</span></nav>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap tool-head">
+    <p class="crumb"><a href="/">ToolBots</a> / <span data-tb="crumb-name"></span></p>
+    <h1 data-tb="page-title"></h1>
+    <p class="lede" data-tb="lede"></p>
+  </div>
+  <div class="wrap">
+    <div class="workbench">
+      <div><label for="input-text">Token</label>
+        <textarea id="input-text" spellcheck="false" placeholder="Paste a JWT (eyJ…) — it never leaves your device."></textarea></div>
+      <div class="wb-row actions wb-btns">
+        <button id="decode-btn" class="btn-sm primary">Decode</button>
+        <button id="copy-btn" data-tb="copy-btn" class="btn-sm ghost">Copy</button>
+        <button id="clear-btn" data-tb="clear-btn" class="btn-sm ghost">Clear</button>
+      </div>
+      <div id="tool-status" class="status" role="status" aria-live="polite"></div>
+      <div><label>Header</label>
+        <div class="prewrap"><pre id="jwt-header"></pre></div></div>
+      <div><label>Payload (claims)</label>
+        <div class="prewrap"><pre id="output-text"></pre></div></div>
+      <div><label for="jwt-claims">Timestamp claims</label>
+        <div class="reading"><div id="jwt-claims"><div><dt>No timestamp claims</dt><dd>—</dd></div></div></div></div>
+      <div><label>Signature (shown, not verified)</label>
+        <div class="prewrap"><pre id="jwt-sig"></pre></div></div>
+    </div>
+    <div class="tool-docs">
+      <h2>How it works</h2>
+      <p>A JWT is three Base64URL segments joined by dots: <strong>header.payload.signature</strong>. This tool splits the
+      token, decodes the header and payload as UTF-8 JSON, and pretty-prints both. Standard timestamp claims
+      (<code>iat</code>, <code>nbf</code>, <code>exp</code>) are additionally rendered as UTC dates with a human-readable
+      span. The <code>Bearer</code> prefix and any whitespace are tolerated.</p>
+      <h2>Why the signature is not verified</h2>
+      <p>It could be — this tool just doesn't do it, by design. Client-side verification is entirely possible for
+      asymmetric signatures (RS/ES/PS): the issuer's <em>public</em> key is meant to be public, and browsers can verify
+      via WebCrypto. HMAC (HS*) verification is different — it needs the issuer's <em>secret</em> key, which must never
+      be shared with a client. Pinning and trusting a public key inside a browser tool is real work (key distribution,
+      rotation, revocation), so this tool keeps a narrower contract: decode-only, read-only, zero secrets — you inspect
+      the token's contents, and verification stays with your backend or a library like <code>jsonwebtoken</code>.</p>
+      <h2>Privacy</h2>
+      <p>Decoding happens entirely in your browser. Nothing is transmitted, logged, or stored — you can disconnect from
+      the internet and keep using this page.</p>
+    </div>
+    <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand"><span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span><p>Free, private, bot-run browser tools.</p></div>
+    <nav class="footer-col" aria-label="Tools"><h4>Tools</h4><a href="/tools/json/">JSON formatter</a><a href="/tools/base64/">Base64 encoder</a><a href="/tools/hash/">SHA-256 hasher</a><a href="/tools/text-case/">Text case converter</a><a href="/tools/uuid/">UUID generator</a><a href="/tools/color/">Color inspector</a><a href="/tools/jwt/">JWT decoder</a></nav>
+    <nav class="footer-col" aria-label="Site"><h4>Site</h4><a href="/#about">About</a><a href="/llms.txt">llms.txt</a><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">Sitemap</a><a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a></nav>
+    <div class="footer-col footer-meta"><h4>Status</h4><p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p><p class="fineprint">© 2026 ToolBots · Public source · No tracking</p></div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+</footer>
+<script src="logic.js"></script>
+<script src="/assets/js/app.js" defer></script>
+<script>
+let debounceTimer = null; /* shared by tbInit/tbClear so Clear/Esc cancels pending auto-decode */
+window.tbInit = function () {
+  const input = document.getElementById('input-text');
+  const status = document.getElementById('tool-status');
+  const headerEl = document.getElementById('jwt-header');
+  const payloadEl = document.getElementById('output-text');
+  const claimsEl = document.getElementById('jwt-claims');
+  const sigEl = document.getElementById('jwt-sig');
+  const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
+  const J = globalThis.TBJWT;
+
+  /* build the "no claims" placeholder without innerHTML (XSS-safe by construction) */
+  const emptyClaims = () => {
+    const wrap = document.createElement('div');
+    const dt = document.createElement('dt'); dt.textContent = 'No timestamp claims';
+    const dd = document.createElement('dd'); dd.textContent = '—';
+    wrap.appendChild(dt); wrap.appendChild(dd);
+    return wrap;
+  };
+
+  const render = (res) => {
+    headerEl.textContent = JSON.stringify(res.header, null, 2);
+    payloadEl.textContent = JSON.stringify(res.payload, null, 2);
+    sigEl.textContent = res.signatureB64 === '' ? '(empty — unsecured alg "none")' : res.signatureB64;
+    /* All token-derived values are inserted via textContent / DOM attributes —
+       never as markup. Crafted claims cannot execute HTML. */
+    const rows = J.claimsInfo(res.payload);
+    claimsEl.replaceChildren();
+    if (!rows.length) { claimsEl.appendChild(emptyClaims()); return; }
+    for (const r of rows) {
+      const wrap = document.createElement('div');
+      const dt = document.createElement('dt');
+      dt.appendChild(document.createTextNode(r.label + ' ('));
+      const code = document.createElement('code'); code.textContent = r.key;
+      dt.appendChild(code);
+      dt.appendChild(document.createTextNode(')'));
+      const dd = document.createElement('dd');
+      dd.title = r.value;        // attribute assignment — escaped by the DOM
+      dd.textContent = r.detail; // claim-derived text, never markup
+      wrap.appendChild(dt); wrap.appendChild(dd);
+      claimsEl.appendChild(wrap);
+    }
+  };
+  const reset = () => {
+    headerEl.textContent = ''; payloadEl.textContent = '';
+    sigEl.textContent = '';
+    claimsEl.replaceChildren(emptyClaims());
+  };
+
+  const decodeNow = () => {
+    const raw = input.value;
+    if (!raw.trim()) { reset(); status.textContent = ''; status.className = 'status'; return; }
+    try {
+      const res = J.decode(raw);
+      render(res);
+      const alg = res.header && res.header.alg ? String(res.header.alg) : 'no alg';
+      const n = res.payload && typeof res.payload === 'object' ? Object.keys(res.payload).length : 0;
+      if (res.unsecured) {
+        set(true, '⚠ Decoded · alg ' + alg + ' · UNSECURED token (empty signature, alg "none") — provides no authenticity at all');
+      } else {
+        set(true, `✓ Decoded · alg ${alg} · ${n} payload claim${n === 1 ? '' : 's'} · signature NOT verified`);
+      }
+    } catch (e) {
+      reset(); // never leave stale token data on screen after a failed decode
+      set(false, '✗ ' + (e && e.message ? e.message : 'Could not decode this token.'));
+    }
+  };
+
+  document.getElementById('decode-btn').addEventListener('click', decodeNow);
+  input.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(decodeNow, 200); });
+};
+window.tbClear = function () {
+  clearTimeout(debounceTimer); debounceTimer = null; /* cancel pending auto-decode */
+  const headerEl = document.getElementById('jwt-header');
+  const payloadEl = document.getElementById('output-text');
+  const sigEl = document.getElementById('jwt-sig');
+  const claims = document.getElementById('jwt-claims');
+  if (headerEl) headerEl.textContent = '';
+  if (payloadEl) payloadEl.textContent = '';
+  if (sigEl) sigEl.textContent = '';
+  if (claims) {
+    const wrap = document.createElement('div');
+    const dt = document.createElement('dt'); dt.textContent = 'No timestamp claims';
+    const dd = document.createElement('dd'); dd.textContent = '—';
+    wrap.appendChild(dt); wrap.appendChild(dd);
+    claims.replaceChildren(wrap);
+  }
+};
+</script>
+</body>
+</html>
