@@ -28,6 +28,8 @@ jobs:
         run: node tests/verify.mjs
       - name: Privacy negative fixtures (gate must fail on violations)
         run: node tests/privacy-negative.mjs
+      - name: Staged-artifact completeness (runtime scripts must ship)
+        run: node tests/artifact-check.mjs
       - name: HTML sanity checks
         run: |
           set -e
