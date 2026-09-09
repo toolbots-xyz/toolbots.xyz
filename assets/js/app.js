@@ -15,6 +15,8 @@ const TOOLBOTS_TOOLS = [
     desc: 'Bulk v4 UUIDs from real browser crypto randomness. Copy the list.' },
   { path: 'tools/color/',     name: 'Color Inspector',   cats: ['design'],        icon: 'RGB',
     desc: 'Convert HEX ⇄ RGB ⇄ HSL, check contrast ratios, build a mini palette.' },
+  { path: 'tools/jwt/',       name: 'JWT Decoder',       cats: ['dev', 'crypto'], icon: 'JWT',
+    desc: "Decode a JWT's header, payload, and exp/iat timestamps locally. No signature needed." },
 ];
 
 /* ---------- helpers shared by tools ---------- */

@@ -19,7 +19,7 @@ function test(name, fn) {
   catch (e) { failed++; failures.push(`${group} :: ${name}`); line(`  FAIL  ${name}\n        ${e && e.message ? e.message.split('\n')[0] : e}`); }
 }
 
-const TOOLS = ['json', 'base64', 'hash', 'text-case', 'uuid', 'color'];
+const TOOLS = ['json', 'base64', 'hash', 'text-case', 'uuid', 'color', 'jwt'];
 const TOOL_PATHS = TOOLS.map((t) => `tools/${t}/`);
 
 /* ================= STRUCTURE ================= */
@@ -50,9 +50,9 @@ startGroup('structure: app.js registry ↔ disk');
   const m = appJs.match(/TOOLBOTS_TOOLS = \[([\s\S]*?)\];/);
   assert.ok(m, 'TOOLBOTS_TOOLS not found in assets/js/app.js');
   const regPaths = [...m[1].matchAll(/path: '([^']+)'/g)].map((x) => x[1]);
-  test('registry lists exactly the 6 tool paths', () => {
+  test('registry lists exactly the 7 tool paths', () => {
     assert.deepStrictEqual([...regPaths].sort(), [...TOOL_PATHS].sort());
-    assert.strictEqual(regPaths.length, 6);
+    assert.strictEqual(regPaths.length, 7);
   });
   for (const p of regPaths) {
     test(`registry path exists on disk with index.html: ${p}`, () => {
@@ -147,9 +147,10 @@ startGroup('logic: loading logic.js modules');
 await import(pathToFileURL(path.join(ROOT, 'tools/text-case/logic.js')).href);
 await import(pathToFileURL(path.join(ROOT, 'tools/base64/logic.js')).href);
 await import(pathToFileURL(path.join(ROOT, 'tools/color/logic.js')).href);
-const C = globalThis.TBTextCase, B = globalThis.TBBase64, K = globalThis.TBColor;
+await import(pathToFileURL(path.join(ROOT, 'tools/jwt/logic.js')).href);
+const C = globalThis.TBTextCase, B = globalThis.TBBase64, K = globalThis.TBColor, W = globalThis.TBJWT;
 test('namespaces exported on globalThis', () => {
-  assert.ok(C && B && K, 'TBTextCase/TBBase64/TBColor must all be defined');
+  assert.ok(C && B && K && W, 'TBTextCase/TBBase64/TBColor/TBJWT must all be defined');
 });
 
 startGroup('logic: text-case');
@@ -258,6 +259,83 @@ test('round-trip hex → rgb → hex for 20 random colors', () => {
   }
 });
 
+/* ---------- jwt ---------- */
+startGroup('logic: jwt');
+/* canonical jwt.io example token (HS256; decode-only — no secret involved) */
+const JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+const b64urlObj = (o) => {
+  const bytes = new TextEncoder().encode(JSON.stringify(o));
+  let bin = '';
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+test('decodes the canonical example token', () => {
+  const r = W.decode(JWT_TOKEN);
+  assert.deepStrictEqual(r.header, { alg: 'HS256', typ: 'JWT' });
+  assert.deepStrictEqual(r.payload, { sub: '1234567890', name: 'John Doe', iat: 1516239022 });
+  assert.strictEqual(r.signatureB64, 'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
+  assert.strictEqual(r.headerB64, JWT_TOKEN.split('.')[0]);
+});
+test('tolerates Bearer prefix, whitespace, and newlines', () => {
+  const r = W.decode('Bearer\t\n ' + JWT_TOKEN.slice(0, 40) + '\n  ' + JWT_TOKEN.slice(40) + ' ');
+  assert.deepStrictEqual(r.header, { alg: 'HS256', typ: 'JWT' });
+});
+test('decodes unicode payloads (UTF-8: emoji, CJK, combining marks)', () => {
+  const payload = { name: 'é🎉中文e\u0301', note: '制限あり 🔐' };
+  const token = b64urlObj({ alg: 'HS256', typ: 'JWT' }) + '.' + b64urlObj(payload) + '.c2ln';
+  const r = W.decode(token);
+  assert.deepStrictEqual(r.payload, payload);
+});
+test('rejects missing/extra segments with actionable message', () => {
+  assert.throws(() => W.decode('onlyone'), /expected header\.payload\.signature.*got 1/s);
+  assert.throws(() => W.decode('a.b'), /got 2/);
+  assert.throws(() => W.decode('a.b.c.d'), /got 4/);
+  const jwe = 'v.' + b64urlObj({ alg: 'HS256' }) + '.x.y.z';
+  assert.throws(() => W.decode(jwe), /got 5|JWE/);
+});
+test('rejects invalid base64url per segment', () => {
+  const h = b64urlObj({ alg: 'HS256' });
+  assert.throws(() => W.decode(h.replace('e', '!!') + '.' + h + '.sig'), /Segment 1 .*not valid Base64URL/);
+  assert.throws(() => W.decode(h + '.' + 'not@valid!' + '.sig'), /Segment 2 .*not valid Base64URL/);
+});
+test('rejects empty segments', () => {
+  assert.throws(() => W.decode('..sig'), /Segment 1 .*is empty/);
+  const h = b64urlObj({ alg: 'HS256' });
+  assert.throws(() => W.decode(h + '.' + '' + '.sig'), /Segment 2 .*is empty/);
+});
+test('rejects invalid JSON and non-object JSON', () => {
+  const badB64 = (s) => Buffer.from(s).toString('base64url');
+  assert.throws(() => W.decode(badB64('not-json') + '.' + b64urlObj({ a: 1 }) + '.s'), /Header is not valid JSON/);
+  assert.throws(() => W.decode(b64urlObj({ alg: 'HS256' }) + '.' + badB64('[1,2,3]') + '.s'), /Payload must be a JSON object/);
+  assert.throws(() => W.decode(b64urlObj({ alg: 'HS256' }) + '.' + badB64('"str"') + '.s'), /Payload must be a JSON object/);
+});
+test('oversized input is rejected without decoding', () => {
+  const big = 'e'.repeat(1000001);
+  assert.throws(() => W.decode(big), /Token too large/);
+});
+test('boundary: just under the 1,000,000-char limit decodes fine', () => {
+  const payload = { pad: 'x'.repeat(1000) };
+  const tok = b64urlObj({ alg: 'HS256' }) + '.' + b64urlObj(payload) + '.' + 's'.repeat(994000);
+  const r = W.decode(tok); // ~996,000 chars total — under the limit
+  assert.strictEqual(typeof r.payload.pad, 'string');
+});
+test('claimsInfo renders iat/nbf/exp rows with UTC detail; skips absent; flags non-numeric', () => {
+  const rows = W.claimsInfo({ iat: 1516239022, exp: 'soon', nbf: 1516239022 });
+  assert.deepStrictEqual(rows.map((r) => r.key), ['iat', 'nbf', 'exp']);
+  assert.match(rows[0].detail, /2018-01-18 01:30:22 UTC/);
+  assert.strictEqual(rows[2].detail, 'not a NumericDate (seconds)');
+});
+test('claimsInfo returns [] for payloads without timestamp claims', () => {
+  assert.deepStrictEqual(W.claimsInfo({ sub: 'x' }), []);
+  assert.deepStrictEqual(W.claimsInfo(null), []);
+});
+test('humanSpan formats spans sanely', () => {
+  assert.strictEqual(W.humanSpan(0), '1 sec');
+  assert.strictEqual(W.humanSpan(90 * 1000), '2 min');
+  assert.strictEqual(W.humanSpan(2 * 3600 * 1000), '2 hours');
+  assert.strictEqual(W.humanSpan(3 * 86400 * 1000), '3 days');
+});
+
 /* ================= PRIVACY: no third-party resources ================= */
 
 import { resourceViolations, includesAppJs, TRACKER_RE, SITE_ORIGIN } from './lib/privacy.mjs';
@@ -278,6 +356,25 @@ for (const page of SERVED_PAGES) {
   test(`app.js include present and same-origin (${page})`, () => {
     if (page === '404.html') return; // 404 is intentionally script-free
     assert.ok(includesAppJs(html, base), 'page must load /assets/js/app.js');
+  });
+}
+
+/* ================= ARTIFACT: runtime JS must ship to production ================= */
+
+startGroup('artifact: deploy workflow must serve tools/*/logic.js');
+{
+  const wf = read('.github/workflows/deploy.yml');
+  test('deploy job no longer strips tools/*/logic.js from the Pages artifact', () => {
+    assert.ok(!/rm -rf[^\n]*tools\/\*\/logic\.js/.test(wf),
+      'artifact-exclusion must not remove tools/*/logic.js — tool pages load it at runtime');
+  });
+  test('every tool page references logic.js (or uses the inline tbInit pattern)', () => {
+    for (const t of TOOLS) {
+      const html = read(`tools/${t}/index.html`);
+      const loadsLogic = /<script src="logic\.js">/.test(html);
+      const inline = /window\.tbInit\s*=\s*function/.test(html);
+      assert.ok(loadsLogic || inline, `${t} neither loads logic.js nor defines tbInit`);
+    }
   });
 }
 
