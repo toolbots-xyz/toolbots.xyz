@@ -61,25 +61,35 @@
     if (text.includes('?')) {
       fail(`"?" is a Quartz/Spring token and is unsupported in v1 (use "*" in five-field Unix cron)`);
     }
-    if (text.includes('L') || text.includes('W') || text.includes('#')) {
-      /* L, W and # are Quartz/other-dialect extensions, not Vixie field names */
+    /* Classify WHOLE name tokens first: recognized Vixie month/weekday names
+       (JAN..DEC, SUN..SAT, case-insensitive) get the "valid but unsupported"
+       wording; unknown letter words get "unknown name". Only after names are
+       ruled out do we detect standalone Quartz operator tokens L, W, # — so
+       WED and JUL are never mistaken for W/L operators. */
+    const NAMES = name === 'month'
+      ? ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+      : name === 'dow'
+        ? ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+        : [];
+    const words = (text.match(/[A-Za-z]+/g) || []);
+    const recognized = words.filter((w) => NAMES.includes(w.toLowerCase()));
+    const unknown = words.filter((w) => !NAMES.includes(w.toLowerCase()));
+    if (recognized.length) {
+      fail(`month/weekday names (${recognized.join(', ').toUpperCase()}) are valid in Vixie-derived cron but unsupported in v1 — use numbers (${range.min}-${range.max})`);
+    }
+    /* standalone single-letter L/W (any case) or a bare # are Quartz operator
+       tokens (not name words); detect them before the unknown-name fallback */
+    if (unknown.some((w) => /^[LW]$/i.test(w)) || text.includes('#')) {
+      fail(`"L", "W" and "#" are Quartz/Spring-style tokens, not five-field Unix cron — unsupported in v1`);
+    }
+    if (words.length && unknown.length) {
+      fail(`unknown name "${unknown[0]}" in ${FIELD_LABELS[name]} field — five-field Unix cron v1 here accepts numbers (${range.min}-${range.max}) only`);
+    }
+    if (/(^|[^A-Za-z])L([^A-Za-z]|$)/.test(text) || /(^|[^A-Za-z])W([^A-Za-z]|$)/.test(text) || text.includes('#')) {
+      /* boundary-adjacent operators like 15W / 1#2 (letter glued to digits) */
       fail(`"L", "W" and "#" are Quartz/Spring-style tokens, not five-field Unix cron — unsupported in v1`);
     }
     if (!/^[0-9*,\-/]+$/.test(text)) {
-      // distinguish recognized Vixie month/weekday names from unknown letters
-      const NAMES = name === 'month'
-        ? ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-        : name === 'dow'
-          ? ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-          : [];
-      const words = (text.match(/[A-Za-z]+/g) || []);
-      const recognized = words.filter((w) => NAMES.includes(w.toLowerCase()));
-      if (recognized.length) {
-        fail(`month/weekday names (${recognized.join(', ').toUpperCase()}) are valid in Vixie-derived cron but unsupported in v1 — use numbers (${range.min}-${range.max})`);
-      }
-      if (words.length) {
-        fail(`unknown name "${words[0]}" in ${FIELD_LABELS[name]} field — five-field Unix cron v1 here accepts numbers (${range.min}-${range.max}) only`);
-      }
       fail(`unexpected characters in ${FIELD_LABELS[name]} field ("${text}")`);
     }
 
@@ -264,10 +274,18 @@
       const step = parseInt(rawTokens[0].slice(2), 10);
       const mins = sortVals(m.values);
       if (Number.isFinite(step) && step > 30) {
-        // describe only what actually happens within each hour; if the step is
-        // >= 60 the field fires once per hour and there is NO sub-hour cadence
         const times = mins.map((x) => ':' + String(x).padStart(2, '0')).join(' and ');
-        notes.push(`A minute step of ${step} anchors at 0 and resets every hour — steps never span fields. Within each hour it fires only at ${times}; it is NOT once every ${step} minutes.`);
+        if (step === 45 || step === 30) {
+          /* 30 and 45 divide 60 unevenly relative to a naive reading: 45 gives
+             :00 and :45 — a 45-minute gap then a 15-minute gap. Keep the
+             non-uniform caution because the misreading is common. */
+          notes.push(`A minute step of ${step} anchors at 0 and resets every hour — steps never span fields. Within each hour it fires only at ${times}; the gaps are ${60 - step} and ${step} minutes, so it is NOT once every ${step} minutes.`);
+        } else if (step < 60) {
+          notes.push(`A minute step of ${step} anchors at 0 and resets every hour — steps never span fields. Within each hour it fires only at ${times}.`);
+        } else {
+          // step >= 60: exactly one hit per hour; no sub-hour cadence claim either way
+          notes.push(`A minute step of ${step} anchors at 0 and resets every hour — steps never span fields, so within each hour it fires only at ${times}.`);
+        }
       }
     }
 
@@ -309,6 +327,15 @@
       e.field = null; e.dialect = true; throw e;
     }
     if (tokens.length < 5) {
+      /* a month/weekday NAME in a wrong slot is the common way to end up with
+         4 tokens; say so instead of a bare field-count error */
+      const monthName = tokens.some((x) => /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/i.test(x));
+      const dowName = tokens.some((x) => /^(sun|mon|tue|wed|thu|fri|sat)$/i.test(x));
+      if (monthName || dowName) {
+        const which = monthName ? 'month' : 'day-of-week';
+        const e = new Error(`Expected 5 fields (minute hour day-of-month month day-of-week) but got ${tokens.length}. This looks like a ${which} name used in the wrong position — keep every field in order and use numbers (${which === 'month' ? '1-12 for the month' : '0-7 for the day-of-week'}).`);
+        e.field = null; throw e;
+      }
       const e = new Error(`Expected 5 fields (minute hour day-of-month month day-of-week) but got ${tokens.length}.`);
       e.field = null; throw e;
     }

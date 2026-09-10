@@ -430,11 +430,41 @@ test('minute cautions derive from actual values: */60 and */90 never invent :60/
     assert.ok(note, `${expr} should carry a step caution`);
     assert.match(note, new RegExp(`fires only at ${expectTimes}\\b`), `${expr} caution must list actual fire times`);
     assert.doesNotMatch(note, /:60|:90|:100/);
-    assert.match(note, /NOT once every (60|90) minutes/);
   }
-  // */45 keeps both hits
+  // */45 keeps both hits and its non-uniform caution
   const r45 = dec('*/45 * * * *');
-  assert.match(r45.description.notes.find((n) => /resets every hour/.test(n)), /:00 and :45/);
+  const n45 = r45.description.notes.find((n) => /resets every hour/.test(n));
+  assert.match(n45, /:00 and :45/);
+  assert.match(n45, /NOT once every 45 minutes/);
+  // */60 and */90 must NOT carry the unconditional "NOT once every N minutes" denial
+  for (const expr of ['*/60 * * * *', '*/90 * * * *']) {
+    const note = dec(expr).description.notes.find((n) => /resets every hour/.test(n));
+    assert.doesNotMatch(note, /NOT once every/, `${expr} must not claim a denied cadence`);
+  }
+  // */50 (also two hits) keeps a factual within-hour statement
+  const r50 = dec('*/50 * * * *');
+  assert.match(r50.description.notes.find((n) => /resets every hour/.test(n)), /:00 and :50/);
+});
+test('recognized names classified before operator tokens: WED/JUL are not Quartz tokens', () => {
+  // uppercase and lowercase weekday name in dow slot
+  assert.match(rej('0 0 * * WED').errors[0].message, /month\/weekday names \(WED\) are valid in Vixie/);
+  assert.match(rej('0 0 * * wed').errors[0].message, /month\/weekday names \(WED\) are valid in Vixie/);
+  // month name in month slot (JUL case-insensitive) -> unsupported-in-v1 wording
+  assert.match(rej('0 0 * JUL *').errors[0].message, /month\/weekday names \(JUL\) are valid in Vixie/);
+  assert.match(rej('0 0 * jul *').errors[0].message, /month\/weekday names \(JUL\) are valid in Vixie/);
+});
+test('actual Quartz operator tokens L/15W/1#2 rejected as dialect (distinct from names)', () => {
+  for (const expr of ['0 0 * * L', '0 0 * * w', '0 0 * 15W *', '0 0 * 1#2 *']) {
+    const e = rej(expr);
+    const m = e.errors ? e.errors[0].message : e.message;
+    assert.match(m, /Quartz\/Spring-style tokens/, `${expr} must be worded as a dialect token`);
+  }
+});
+test('month/weekday name in a wrong slot explains the position (0 0 JUL *)', () => {
+  const e = rej('0 0 JUL *');
+  assert.match(e.message, /Expected 5 fields .* got 4/);
+  assert.match(e.message, /month name used in the wrong position/);
+  assert.match(e.message, /1-12 for the month/);
 });
 test('DOM star-step note uses actual values, no hardcoded odd-day series (*/3)', () => {
   const note = dec('0 0 */3 * *').description.notes.find((n) => /anchors at the field minimum/.test(n));
