@@ -19,7 +19,7 @@ Founded: 2026 · Status: 7 tools live · Business model: none required — stati
 - Pages are static HTML: navigation, docs, and related-tool links are in the source, while titles, lede text, and FAQ sections are rendered client-side from the page's embedded JSON-LD.
 - `/robots.txt` and `/sitemap.xml` enumerate all pages.
 - This file (`/llms.txt`) is the machine-readable site summary.
-- Tool pages expose a JSON-LD block (class `tb-tool`) with name, description, input/output element IDs, and FAQ pairs mirrored by a FAQPage JSON-LD block.
+- Tool pages expose a JSON-LD block (class `tb-tool`) with name, description, input/output element IDs, and FAQ pairs. The six original tools (base64, color, hash, json, text-case, uuid) also carry a FAQPage JSON-LD block mirroring those pairs; the JWT decoder ships FAQ pairs in its tool metadata without a separate FAQPage block.
 - Each tool page ends with a "Related tools" section linking to 2 genuinely related tools with descriptive anchors.
 
 ## Architecture
