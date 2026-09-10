@@ -30,6 +30,8 @@ jobs:
         run: node tests/privacy-negative.mjs
       - name: Staged-artifact completeness (runtime scripts must ship)
         run: node tests/artifact-check.mjs
+      - name: FAQ consistency (visible FAQ must match FAQPage JSON-LD exactly)
+        run: node tests/faq-consistency.mjs
       - name: HTML sanity checks
         run: |
           set -e

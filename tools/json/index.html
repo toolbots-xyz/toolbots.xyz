@@ -10,9 +10,24 @@
 <link rel="stylesheet" href="/assets/css/style.css">
 <script type="application/ld+json" class="tb-tool">
 {"name":"JSON Formatter","description":"Validate, format, and minify JSON instantly — right in your browser, with nothing ever uploaded.","inputElement":"input-text","outputElement":"output-text","faq":[
-["Is my JSON uploaded anywhere?","No. Parsing happens entirely in your browser with JavaScript. The site has no backend that could receive your data."],
+["Does this tool upload my JSON?","No. Parsing happens entirely in your browser with JavaScript. The site has no backend that could receive your data — you can even disconnect from the internet and keep using it."],
+["How do I format JSON with this tool?","Paste your JSON, press Format, and it is pretty-printed with 2-space indentation. For example, {\"hello\": \"world\", \"items\": [1, 2, 3]} becomes a readable block with each key on its own line."],
+["What does the error message mean?","When JSON is invalid, the parser reports the problem and the character position where it was detected, e.g. \u201cUnexpected token } at position 42\u201d."],
 ["How large a file can it handle?","Comfortably files up to several megabytes — everything runs in memory on your device. Very large files just take a moment."],
-["What does the error message mean?","When JSON is invalid, the parser reports the problem and the character position where it was detected, e.g. \u201cUnexpected token } at position 42\u201d."]]}
+["How do I minify JSON?","Paste your JSON and press Minify: whitespace outside strings is stripped (whitespace inside string values is preserved) and the result is a single line, ready to embed or send over the wire."]]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Does this tool upload my JSON?", "acceptedAnswer": {"@type": "Answer", "text": "No. Parsing happens entirely in your browser with JavaScript. The site has no backend that could receive your data — you can even disconnect from the internet and keep using it."}},
+    {"@type": "Question", "name": "How do I format JSON with this tool?", "acceptedAnswer": {"@type": "Answer", "text": "Paste your JSON, press Format, and it is pretty-printed with 2-space indentation. For example, {\"hello\": \"world\", \"items\": [1, 2, 3]} becomes a readable block with each key on its own line."}},
+    {"@type": "Question", "name": "What does the error message mean?", "acceptedAnswer": {"@type": "Answer", "text": "When JSON is invalid, the parser reports the problem and the character position where it was detected, e.g. \u201cUnexpected token } at position 42\u201d."}},
+    {"@type": "Question", "name": "How large a file can it handle?", "acceptedAnswer": {"@type": "Answer", "text": "Comfortably files up to several megabytes — everything runs in memory on your device. Very large files just take a moment."}},
+    {"@type": "Question", "name": "How do I minify JSON?", "acceptedAnswer": {"@type": "Answer", "text": "Paste your JSON and press Minify: whitespace outside strings is stripped (whitespace inside string values is preserved) and the result is a single line, ready to embed or send over the wire."}}
+  ]
+}
 </script>
 </head>
 <body>
