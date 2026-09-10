@@ -16,7 +16,7 @@ Founded: 2026 · Status: 7 tools live · Business model: none required — stati
 
 ## For automated visitors
 
-- Every page is server-rendered static HTML — readable without JS execution.
+- Pages are static HTML: navigation, docs, and related-tool links are in the source, while titles, lede text, and FAQ sections are rendered client-side from the page's embedded JSON-LD.
 - `/robots.txt` and `/sitemap.xml` enumerate all pages.
 - This file (`/llms.txt`) is the machine-readable site summary.
 - Tool pages expose a JSON-LD block (class `tb-tool`) with name, description, input/output element IDs, and FAQ pairs mirrored by a FAQPage JSON-LD block.
