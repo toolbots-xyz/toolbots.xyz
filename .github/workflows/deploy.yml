@@ -32,6 +32,8 @@ jobs:
         run: node tests/artifact-check.mjs
       - name: FAQ consistency (visible FAQ must match FAQPage JSON-LD exactly)
         run: node tests/faq-consistency.mjs
+      - name: Canonical URLs (absolute self canonicals on every registered tool)
+        run: node tests/canonical-urls.mjs
       - name: HTML sanity checks
         run: |
           set -e
