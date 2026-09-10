@@ -19,7 +19,7 @@ function test(name, fn) {
   catch (e) { failed++; failures.push(`${group} :: ${name}`); line(`  FAIL  ${name}\n        ${e && e.message ? e.message.split('\n')[0] : e}`); }
 }
 
-const TOOLS = ['json', 'base64', 'hash', 'text-case', 'uuid', 'color', 'jwt'];
+const TOOLS = ['json', 'base64', 'hash', 'text-case', 'uuid', 'color', 'jwt', 'cron'];
 const TOOL_PATHS = TOOLS.map((t) => `tools/${t}/`);
 
 /* ================= STRUCTURE ================= */
@@ -50,9 +50,9 @@ startGroup('structure: app.js registry ↔ disk');
   const m = appJs.match(/TOOLBOTS_TOOLS = \[([\s\S]*?)\];/);
   assert.ok(m, 'TOOLBOTS_TOOLS not found in assets/js/app.js');
   const regPaths = [...m[1].matchAll(/path: '([^']+)'/g)].map((x) => x[1]);
-  test('registry lists exactly the 7 tool paths', () => {
+  test('registry lists exactly the 8 tool paths', () => {
     assert.deepStrictEqual([...regPaths].sort(), [...TOOL_PATHS].sort());
-    assert.strictEqual(regPaths.length, 7);
+    assert.strictEqual(regPaths.length, 8);
   });
   for (const p of regPaths) {
     test(`registry path exists on disk with index.html: ${p}`, () => {
@@ -148,9 +148,10 @@ await import(pathToFileURL(path.join(ROOT, 'tools/text-case/logic.js')).href);
 await import(pathToFileURL(path.join(ROOT, 'tools/base64/logic.js')).href);
 await import(pathToFileURL(path.join(ROOT, 'tools/color/logic.js')).href);
 await import(pathToFileURL(path.join(ROOT, 'tools/jwt/logic.js')).href);
-const C = globalThis.TBTextCase, B = globalThis.TBBase64, K = globalThis.TBColor, W = globalThis.TBJWT;
+await import(pathToFileURL(path.join(ROOT, 'tools/cron/logic.js')).href);
+const C = globalThis.TBTextCase, B = globalThis.TBBase64, K = globalThis.TBColor, W = globalThis.TBJWT, CR = globalThis.TBCron;
 test('namespaces exported on globalThis', () => {
-  assert.ok(C && B && K && W, 'TBTextCase/TBBase64/TBColor/TBJWT must all be defined');
+  assert.ok(C && B && K && W && CR, 'TBTextCase/TBBase64/TBColor/TBJWT/TBCron must all be defined');
 });
 
 startGroup('logic: text-case');
@@ -384,6 +385,139 @@ test('humanSpan formats spans sanely', () => {
   assert.strictEqual(W.humanSpan(90 * 1000), '2 min');
   assert.strictEqual(W.humanSpan(2 * 3600 * 1000), '2 hours');
   assert.strictEqual(W.humanSpan(3 * 86400 * 1000), '3 days');
+});
+
+/* ---------- cron ---------- */
+startGroup('logic: cron');
+/* fixtures F1-F15 per research contract (t_e2690da2, primary sources:
+   OpenBSD/Debian crontab(5) + cronie cron.c/entry.c) */
+const dec = (t) => CR.decode(t);
+const rej = (t) => { try { dec(t); } catch (e) { return e; } throw new Error('expected rejection for ' + t); };
+
+test('F1: */5 * * * * -> every 5 minutes', () => {
+  const r = dec('*/5 * * * *');
+  assert.match(r.description.combined, /minutes 0, 5, 10, .*55/);
+  assert.match(r.description.combined, /every day/);
+});
+test('F2: 0 9-17 * * 1-5 -> inclusive ranges, weekdays', () => {
+  const r = dec('0 9-17 * * 1-5');
+  assert.match(r.description.combined, /from 09 through 17/);
+  assert.match(r.description.combined, /Monday.*Friday/s);
+});
+test('F3: 0 12 * * 0 -> Sunday (0)', () => {
+  assert.match(dec('0 12 * * 0').description.combined, /Sunday/);
+});
+test('F4: 0 12 * * 7 -> 7 == Sunday, same schedule as F3', () => {
+  assert.match(dec('0 12 * * 7').description.combined, /Sunday/);
+  assert.match(dec('0 12 * * 7').description.notes.join(' '), /7 in day-of-week|normalized/);
+});
+test('F5: 30 4 1,15 * 5 -> OR semantics (OpenBSD verbatim example)', () => {
+  const r = dec('30 4 1,15 * 5');
+  assert.match(r.description.combined, /04:30/);
+  assert.match(r.description.combined, /day-of-month 1, 15 OR day-of-week Friday/);
+  assert.ok(r.description.notes.some((n) => /OR caution|UNION/.test(n)));
+});
+test('F6: */45 * * * * -> minutes {0,45} with non-span caution', () => {
+  const r = dec('*/45 * * * *');
+  assert.match(r.description.combined, /minutes 0, 45/);
+  assert.ok(r.description.notes.some((n) => /resets every hour|NOT once every 45/.test(n)));
+});
+test('F7: 0 0 */2 * * -> odd days, starred anchoring note', () => {
+  const r = dec('0 0 */2 * *');
+  assert.match(r.description.combined, /day-of-month is 1, 3, 5/);
+  assert.ok(r.description.notes.some((n) => /anchors at the field minimum/.test(n)));
+});
+test('F8: 0 0 */2 * 1 -> AND semantics (star-step still counts as starred)', () => {
+  const r = dec('0 0 */2 * 1');
+  assert.match(r.description.combined, /day-of-month is 1, 3, 5.*AND day-of-week is Monday/);
+  assert.ok(r.description.notes.some((n) => /AND semantics/.test(n)));
+  assert.doesNotMatch(r.description.combined, /OR/);
+});
+test('F9: 0 0 1-15 * 1 -> OR semantics (explicit range is restricted)', () => {
+  const r = dec('0 0 1-15 * 1');
+  assert.match(r.description.combined, /day-of-month 1, 2, .*15 OR day-of-week Monday/);
+  assert.ok(r.description.notes.some((n) => /OR caution|UNION/.test(n)));
+});
+test('F10: month name JAN -> rejected as unsupported in v1 (not "invalid")', () => {
+  const e = rej('0 0 * * JAN');
+  assert.match(e.errors[0].message, /valid in Vixie-derived cron but unsupported in v1/);
+});
+test('F11: DOW name range MON-FRI -> rejected as unsupported in v1', () => {
+  const e = rej('0 0 * * MON-FRI');
+  assert.match(e.errors[0].message, /unsupported in v1/);
+});
+test('F12: 6 fields -> dialect rejection (Quartz/Spring)', () => {
+  const e = rej('0 0 12 13 * 5');
+  assert.match(e.message, /different dialect|Quartz\/Spring/);
+  assert.match(e.message, /five-field Unix/);
+});
+test('F13: 7 fields with ? and year -> dialect rejection', () => {
+  const e = rej('0 0 12 ? * 6 2026');
+  assert.match(e.message, /different dialect|Quartz\/Spring/);
+});
+test('F14: @reboot -> rejected (not a recurring schedule)', () => {
+  const e = rej('@reboot');
+  assert.match(e.message, /not a recurring schedule/);
+});
+test('F15: @daily -> expanded to 0 0 * * * and described', () => {
+  const r = dec('@daily');
+  assert.strictEqual(r.expanded, '0 0 * * *');
+  assert.strictEqual(r.shortcut, '@daily');
+  assert.match(r.description.combined, /00:00/);
+});
+test('all shortcuts expand per the OpenBSD table', () => {
+  assert.strictEqual(dec('@yearly').expanded, '0 0 1 1 *');
+  assert.strictEqual(dec('@annually').expanded, '0 0 1 1 *');
+  assert.strictEqual(dec('@monthly').expanded, '0 0 1 * *');
+  assert.strictEqual(dec('@weekly').expanded, '0 0 * * 0');
+  assert.strictEqual(dec('@midnight').expanded, '0 0 * * *');
+  assert.strictEqual(dec('@hourly').expanded, '0 * * * *');
+});
+test('invalid-after-valid: errors for EVERY invalid field, no partial description', () => {
+  const e = rej('99 9-17 * * 1-5');
+  assert.ok(e.errors.length >= 1);
+  assert.match(e.errors[0].message, /minute: 99 out of range 0-59/);
+});
+test('multiple invalid fields are all reported', () => {
+  const e = rej('99 25 * 13 *');
+  const msgs = e.errors.map((x) => x.message).join(' | ');
+  assert.match(msgs, /minute: 99 out of range/);
+  assert.match(msgs, /hour: 25 out of range/);
+  assert.match(msgs, /month: 13 out of range/);
+});
+test('zero step rejected', () => {
+  const e = rej('*/0 * * * *');
+  assert.match(e.message, /step "\/0" is invalid/);
+});
+test('descending range rejected', () => {
+  const e = rej('0 17-9 * * *');
+  assert.match(e.message, /descending range 17-9/);
+});
+test('range out of bounds rejected per field', () => {
+  assert.match(rej('60 0 * * *').message, /minute: 60 out of range 0-59/);
+  assert.match(rej('0 24 * * *').message, /hour: 24 out of range/);
+  assert.match(rej('0 0 32 * *').message, /day-of-month: 32 out of range/);
+  assert.match(rej('0 0 * 13 *').message, /month: 13 out of range/);
+  assert.match(rej('0 0 * * 8').message, /day-of-week: 8 out of range/);
+});
+test('cronie random range ~ rejected as unsupported', () => {
+  assert.match(rej('0 0~30 * * *').message, /cronie extension/);
+});
+test('? token rejected as Quartz/Spring', () => {
+  assert.match(rej('0 0 ? * *').message, /Quartz\/Spring token/);
+});
+test('too few / too many fields rejected', () => {
+  assert.match(rej('0 0 1 *').message, /Expected 5 fields .* got 4/);
+  assert.match(rej('* * * * * *').message, /different dialect/);
+});
+test('over-100-char input rejected', () => {
+  const e = rej('0 0 * * * '.repeat(12));
+  assert.match(e.message, /100-character limit/);
+});
+test('unknown @shortcut rejected with supported list', () => {
+  const e = rej('@fortnightly');
+  assert.match(e.message, /Unknown shortcut "@fortnightly"/);
+  assert.match(e.message, /@yearly/);
 });
 
 /* ================= PRIVACY: no third-party resources ================= */
