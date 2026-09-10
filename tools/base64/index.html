@@ -10,9 +10,24 @@
 <link rel="stylesheet" href="/assets/css/style.css">
 <script type="application/ld+json" class="tb-tool">
 {"name":"Base64 Encoder","description":"Encode text to Base64 or decode Base64 back to text — instantly, in your browser, with full Unicode support.","inputElement":"input-text","outputElement":"output-text","faq":[
-["Does it support emoji and non-Latin text?","Yes. The tool encodes UTF-8 bytes, so emoji, accented characters, and scripts like Japanese or Arabic round-trip perfectly."],
-["What is URL-safe Base64?","A variant that replaces + with - and / with _ so the output can be used in URLs and filenames. Tick the checkbox to use it."],
-["Can it decode files or images?","This tool works on text. Decode a Base64 string back to the text it represents; binary-to-image decoding is on the roadmap."]]}
+["Does this tool upload my text?","No. Encoding and decoding run entirely in your browser — your text never leaves your device, and the site has no backend that could receive it."],
+["Is Base64 encryption?","No. Base64 is an encoding, not encryption: it is trivially reversible and offers zero security. Never use it to protect secrets — use real encryption for that."],
+["What does Base64 look like?","The text hello encodes to aGVsbG8= and hi encodes to aGk=. Paste aGVsbG8= above and press Decode to get hello back."],
+["Why does Base64 end with one or more = signs?","The = characters are padding: Base64 output must be a multiple of 4 characters, so padding is added to reach the next multiple of 4. hi becomes aGk= (one =) and a becomes YQ== (two). This tool adds missing padding automatically when decoding."],
+["Does it support emoji and non-Latin text?","Yes. The tool encodes UTF-8 bytes, so emoji, accented characters, and scripts like Japanese or Arabic round-trip perfectly."]]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Does this tool upload my text?", "acceptedAnswer": {"@type": "Answer", "text": "No. Encoding and decoding run entirely in your browser — your text never leaves your device, and the site has no backend that could receive it."}},
+    {"@type": "Question", "name": "Is Base64 encryption?", "acceptedAnswer": {"@type": "Answer", "text": "No. Base64 is an encoding, not encryption: it is trivially reversible and offers zero security. Never use it to protect secrets — use real encryption for that."}},
+    {"@type": "Question", "name": "What does Base64 look like?", "acceptedAnswer": {"@type": "Answer", "text": "The text hello encodes to aGVsbG8= and hi encodes to aGk=. Paste aGVsbG8= above and press Decode to get hello back."}},
+    {"@type": "Question", "name": "Why does Base64 end with one or more = signs?", "acceptedAnswer": {"@type": "Answer", "text": "The = characters are padding: Base64 output must be a multiple of 4 characters, so padding is added to reach the next multiple of 4. hi becomes aGk= (one =) and a becomes YQ== (two). This tool adds missing padding automatically when decoding."}},
+    {"@type": "Question", "name": "Does it support emoji and non-Latin text?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The tool encodes UTF-8 bytes, so emoji, accented characters, and scripts like Japanese or Arabic round-trip perfectly."}}
+  ]
+}
 </script>
 </head>
 <body>

@@ -10,9 +10,22 @@
 <link rel="stylesheet" href="/assets/css/style.css">
 <script type="application/ld+json" class="tb-tool">
 {"name":"Color Inspector","description":"Convert colors between HEX, RGB, and HSL, check WCAG 2.1 contrast ratios, and generate tint/shade palettes — all in your browser.","inputElement":"color-input","outputElement":"color-output","faq":[
-["What do the WCAG levels mean?","AA requires 4.5:1 contrast for body text (3:1 for large text); AAA requires 7:1. The tool reports the exact ratio so you can pick accessible text colors."],
-["What is HSL good for?","HSL (Hue, Saturation, Lightness) matches how humans think about color — 'a lighter, less saturated blue' — which makes it ideal for building palettes."],
+["Does this tool upload my colors or history?","No. All conversion and contrast math runs locally in your browser — your colors never leave your device. The page loads only ToolBots' own files, nothing third-party."],
+["What do the WCAG levels mean?","AA requires 4.5:1 contrast for body text (3:1 for large text); AAA requires 7:1. For example, #22d3ee scores 1.81:1 against white text but 11.62:1 against black — so it needs dark text on top, and the tool reports the exact ratio so you can pick."],
+["What is HSL good for?","HSL (Hue, Saturation, Lightness) matches how humans think about color — 'a lighter, less saturated blue' — which makes it ideal for building palettes. #22d3ee is hsl(188, 86%, 53%)."],
 ["Does it accept 3-digit hex like #abc?","Yes — #abc is expanded to #aabbcc automatically, with or without the leading #."]]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Does this tool upload my colors or history?", "acceptedAnswer": {"@type": "Answer", "text": "No. All conversion and contrast math runs locally in your browser — your colors never leave your device. The page loads only ToolBots' own files, nothing third-party."}},
+    {"@type": "Question", "name": "What do the WCAG levels mean?", "acceptedAnswer": {"@type": "Answer", "text": "AA requires 4.5:1 contrast for body text (3:1 for large text); AAA requires 7:1. For example, #22d3ee scores 1.81:1 against white text but 11.62:1 against black — so it needs dark text on top, and the tool reports the exact ratio so you can pick."}},
+    {"@type": "Question", "name": "What is HSL good for?", "acceptedAnswer": {"@type": "Answer", "text": "HSL (Hue, Saturation, Lightness) matches how humans think about color — 'a lighter, less saturated blue' — which makes it ideal for building palettes. #22d3ee is hsl(188, 86%, 53%)."}},
+    {"@type": "Question", "name": "Does it accept 3-digit hex like #abc?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — #abc is expanded to #aabbcc automatically, with or without the leading #."}}
+  ]
+}
 </script>
 </head>
 <body>

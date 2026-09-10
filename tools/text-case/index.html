@@ -10,9 +10,24 @@
 <link rel="stylesheet" href="/assets/css/style.css">
 <script type="application/ld+json" class="tb-tool">
 {"name":"Text Case Converter","description":"Convert text between uppercase, lowercase, title case, sentence case, camelCase, PascalCase, snake_case, kebab-case and CONSTANT_CASE — instantly, in your browser.","inputElement":"input-text","outputElement":"output-text","faq":[
-["What's the difference between camelCase and PascalCase?","camelCase starts with a lowercase letter (myVariableName); PascalCase capitalizes every word including the first (MyVariableName)."],
-["How is Title Case decided?","Minor words (a, an, the, and, or, of, in, to, for…) stay lowercase unless they start the title — following standard headline style."],
-["Does it handle accented characters?","Yes — case conversion uses the browser's locale-aware functions, so é, ß, and other Unicode characters convert correctly."]]}
+["Does this tool upload my text?","No. All conversion happens locally in your browser — nothing is transmitted, logged, or stored."],
+["What is the difference between camelCase and PascalCase?","camelCase starts with a lowercase letter (userAccountSettings); PascalCase capitalizes every word including the first (UserAccountSettings). Both come from User Account Settings."],
+["How is Title Case decided?","Minor words (a, an, the, and, or, of, in, to, for…) stay lowercase unless they start the title. For example, the catcher in the rye becomes The Catcher in the Rye — standard headline style."],
+["What is snake_case vs kebab-case?","snake_case joins words with underscores (user_account_settings); kebab-case joins them with hyphens (user-account-settings). Both come from the same words, lowercased."],
+["Does it handle accented characters?","Yes — conversion uses standard Unicode case rules, so é, ß, and other characters convert correctly. For example, café uppercases to CAFÉ (and German ß becomes SS)."]]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Does this tool upload my text?", "acceptedAnswer": {"@type": "Answer", "text": "No. All conversion happens locally in your browser — nothing is transmitted, logged, or stored."}},
+    {"@type": "Question", "name": "What is the difference between camelCase and PascalCase?", "acceptedAnswer": {"@type": "Answer", "text": "camelCase starts with a lowercase letter (userAccountSettings); PascalCase capitalizes every word including the first (UserAccountSettings). Both come from User Account Settings."}},
+    {"@type": "Question", "name": "How is Title Case decided?", "acceptedAnswer": {"@type": "Answer", "text": "Minor words (a, an, the, and, or, of, in, to, for…) stay lowercase unless they start the title. For example, the catcher in the rye becomes The Catcher in the Rye — standard headline style."}},
+    {"@type": "Question", "name": "What is snake_case vs kebab-case?", "acceptedAnswer": {"@type": "Answer", "text": "snake_case joins words with underscores (user_account_settings); kebab-case joins them with hyphens (user-account-settings). Both come from the same words, lowercased."}},
+    {"@type": "Question", "name": "Does it handle accented characters?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — conversion uses standard Unicode case rules, so é, ß, and other characters convert correctly. For example, café uppercases to CAFÉ (and German ß becomes SS)."}}
+  ]
+}
 </script>
 </head>
 <body>
