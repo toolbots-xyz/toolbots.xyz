@@ -159,29 +159,35 @@
   function joinVals(vals) { return sortVals(vals).join(', '); }
 
   function dayClause(domInfo, dowInfo, starFlags) {
-    const domAll = domInfo.values.size === 31;
-    const dowAll = dowInfo.values.size === 7; // after 7->0 normalization 0..6 all present
     /* cronie entry.c: DOM_STAR/DOW_STAR are set when the RAW field text starts
-       with '*' — BEFORE parsing. The canonical rebuild loses that, so callers
-       pass the raw-token-derived flags here. */
+       with '*' — BEFORE parsing. A field that covers the full range via an
+       explicit range/list (e.g. 1-31) does NOT get the flag, so it stays
+       RESTRICTED and keeps the OR branch alive. That is why starFlags come
+       from the raw tokens rather than from "covers everything" detection. */
     const domStar = starFlags ? starFlags.dom : false;
     const dowStar = starFlags ? starFlags.dow : false;
+    const domAll = domInfo.values.size === 31;
+    const dowAll = dowInfo.values.size === 7; // after 7->0 normalization 0..6 all present
     /* cronie cron.c L582-584: the AND branch applies when either day field is
        starred (DOM_STAR|DOW_STAR set); OR only when BOTH are restricted. */
-    const andBranch = domAll || dowAll || domStar || dowStar;
+    const andBranch = domStar || dowStar;
 
     let text;
-    if (domAll && dowAll) {
+    if (domStar && domAll && dowAll) {
       text = 'every day';
     } else if (andBranch) {
-      // AND: day must satisfy both restricted fields (the starred one is a no-op filter)
+      // AND: day must satisfy both restricted fields (a starred field is a no-op filter
+      // only when it covers the whole range; a star-STEP like */2 still filters!)
       const parts = [];
-      if (!domAll) parts.push(`day-of-month is ${joinVals(domInfo.values)}`);
-      if (!dowAll) parts.push(`day-of-week is ${[...dowInfo.values].map((d) => DOW_NAMES[d]).join(', ')}`);
+      if (!(domStar && domAll)) parts.push(`day-of-month is ${joinVals(domInfo.values)}`);
+      if (!(dowStar && dowAll)) parts.push(`day-of-week is ${[...dowInfo.values].map((d) => DOW_NAMES[d]).join(', ')}`);
       text = 'only when ' + (parts.length ? parts.join(' AND ') : 'every day');
     } else {
-      // OR: both restricted, neither starred
-      text = `on day-of-month ${joinVals(domInfo.values)} OR day-of-week ${[...dowInfo.values].map((d) => DOW_NAMES[d]).join(', ')}`;
+      // OR: both restricted, neither starred — the union is the schedule
+      const domText = domAll
+        ? 'every calendar day (all of 1-31)'
+        : `day-of-month ${joinVals(domInfo.values)}`;
+      text = `on ${domText} OR day-of-week ${[...dowInfo.values].map((d) => DOW_NAMES[d]).join(', ')}`;
     }
     return { text, andBranch, domStar, dowStar, domAll, dowAll };
   }
@@ -300,14 +306,20 @@
        that (a star-step canonicalizes to a plain list). */
     const starFlags = { dom: tokens[2].startsWith('*'), dow: tokens[4].startsWith('*') };
 
-    // rebuild expanded canonical form from parsed values (7->0 already applied)
-    const canon = FIELD_ORDER.map((f) => {
+    /* SEMANTICS-PRESERVING expansion: DOM and DOW keep their RAW text because
+       their spelling (star vs explicit range) determines the AND/OR day rule —
+       re-encoding a star-step as a list, or a full-range as a star, changes
+       semantics. The three time/month fields carry no such cross-field rule,
+       so they canonicalize freely (star for full range, else the value list). */
+    const canonTime = FIELD_ORDER.slice(0, 2).map((f) => {
       const vals = sortVals(parsed[f].values);
       const range = RANGES[f];
-      const all = vals.length === (range.max - range.min + 1);
-      if (all) return '*';
-      return vals.join(',');
-    }).join(' ');
+      return vals.length === (range.max - range.min + 1) ? '*' : vals.join(',');
+    });
+    const monthVals = sortVals(parsed.month.values);
+    const canonMonth = monthVals.length === 12 ? '*' : monthVals.join(',');
+    // order: minute (canonical), hour (canonical), DOM (RAW), month (canonical), DOW (RAW)
+    const canon = [canonTime[0], canonTime[1], tokens[2], canonMonth, tokens[4]].join(' ');
 
     const d = explain(canon, starFlags, tokens);
     // keep raw field text for display

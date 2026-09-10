@@ -438,6 +438,30 @@ test('F9: 0 0 1-15 * 1 -> OR semantics (explicit range is restricted)', () => {
   assert.match(r.description.combined, /day-of-month 1, 2, .*15 OR day-of-week Monday/);
   assert.ok(r.description.notes.some((n) => /OR caution|UNION/.test(n)));
 });
+test('full-range DOM + restricted DOW -> OR union yields every calendar day (0 0 1-31 * 1)', () => {
+  const r = dec('0 0 1-31 * 1');
+  // explicit 1-31 is RESTRICTED (does not start with *), so OR with Monday = every day
+  assert.match(r.description.combined, /every calendar day \(all of 1-31\) OR day-of-week Monday/);
+  // and the expansion must preserve the semantics
+  const re = dec(r.expanded);
+  assert.strictEqual(re.description.combined, r.description.combined);
+});
+test('original-vs-expanded round trips preserve semantics (day-rule cases)', () => {
+  const cases = ['0 0 */2 * 1', '0 0 1-15 * 1', '0 0 1-31 * 1', '30 4 1,15 * 5',
+    '*/45 * * * *', '0 9-17 * * 1-5', '*/5 * * * *', '0 0 */2 * *', '0 12 * * 0', '0 12 * * 7'];
+  for (const t of cases) {
+    const a = dec(t);
+    const b = dec(a.expanded);
+    assert.strictEqual(b.description.combined, a.description.combined,
+      `expansion of "${t}" -> "${a.expanded}" changed semantics`);
+  }
+});
+test('star-step stays starred in the expansion (no list re-encoding of day fields)', () => {
+  const r = dec('0 0 */2 * 1');
+  assert.strictEqual(r.expanded, '0 0 */2 * 1');
+  const re = dec(r.expanded);
+  assert.match(re.description.combined, /AND/);
+});
 test('F10: month name JAN -> rejected as unsupported in v1 (not "invalid")', () => {
   const e = rej('0 0 * * JAN');
   assert.match(e.errors[0].message, /valid in Vixie-derived cron but unsupported in v1/);
