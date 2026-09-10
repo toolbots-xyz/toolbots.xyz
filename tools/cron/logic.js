@@ -261,7 +261,7 @@
 
     if (!raw) { const e = new Error('empty'); e.empty = true; throw e; }
     if (raw.length > 100) {
-      const e = new Error('Expression is over the 100-character limit — check you pasted a single crontab line.');
+      const e = new Error('Over this tool\'s 100-character input limit (an implementation bound of this page, not a cron rule) — check you pasted a single crontab line.');
       e.field = null; throw e;
     }
     if (/^@\S+$/i.test(raw)) {

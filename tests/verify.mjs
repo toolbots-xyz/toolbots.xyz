@@ -534,9 +534,10 @@ test('too few / too many fields rejected', () => {
   assert.match(rej('0 0 1 *').message, /Expected 5 fields .* got 4/);
   assert.match(rej('* * * * * *').message, /different dialect/);
 });
-test('over-100-char input rejected', () => {
+test('over-100-char input rejected (labeled as a tool limit, not a cron rule)', () => {
   const e = rej('0 0 * * * '.repeat(12));
-  assert.match(e.message, /100-character limit/);
+  assert.match(e.message, /100-character input limit/);
+  assert.match(e.message, /implementation bound of this page, not a cron rule/);
 });
 test('unknown @shortcut rejected with supported list', () => {
   const e = rej('@fortnightly');
