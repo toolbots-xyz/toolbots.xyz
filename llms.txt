@@ -4,25 +4,24 @@
 
 Founded: 2026 · Status: 8 tools live · Business model: none required — static hosting is free; future monetization would be sponsorship or optional pro features only. Never data selling.
 
-## Tool catalog (all client-side, all free)
+## Tools
 
-| Tool | URL | What it does |
-|---|---|---|
-| JSON Formatter | /tools/json/ | Validate, pretty-print, minify JSON; reports parse errors with position |
-| Base64 Encoder | /tools/base64/ | UTF-8-safe Base64 encode/decode, URL-safe alphabet option |
-| SHA-256 Hasher | /tools/hash/ | SHA-1/256/384/512 hex digests via the Web Crypto API |
-| Text Case Converter | /tools/text-case/ | upper, lower, title, sentence, camel, pascal, snake, kebab, constant case |
-| UUID Generator | /tools/uuid/ | 1–500 RFC 4122 v4 UUIDs per click from crypto.getRandomValues; upper/braces options |
-| Color Inspector | /tools/color/ | HEX ⇄ RGB ⇄ HSL, WCAG 2.1 contrast vs white/black, 10-step tint/shade palette |
-| JWT Decoder | /tools/jwt/ | Decode JWT header/payload to pretty JSON; human-readable iat/nbf/exp timestamps |
-| Cron Explainer | /tools/cron/ | Five-field Unix cron → plain English; DOM/DOW AND/OR semantics flagged; shortcuts expanded |
+- [JSON Formatter](https://toolbots.xyz/tools/json/): Validate, pretty-print, and minify JSON; reports parse errors with position.
+- [Base64 Encoder](https://toolbots.xyz/tools/base64/): UTF-8-safe Base64 encode/decode with a URL-safe alphabet option.
+- [SHA-256 Hasher](https://toolbots.xyz/tools/hash/): SHA-1/256/384/512 hex digests via the Web Crypto API.
+- [Text Case Converter](https://toolbots.xyz/tools/text-case/): upper, lower, title, sentence, camel, pascal, snake, kebab, constant case.
+- [UUID Generator](https://toolbots.xyz/tools/uuid/): 1–500 RFC 4122 v4 UUIDs per click from crypto.getRandomValues; upper/braces options.
+- [Color Inspector](https://toolbots.xyz/tools/color/): HEX ⇄ RGB ⇄ HSL, WCAG 2.1 contrast vs white/black, tint/shade palette.
+- [JWT Decoder](https://toolbots.xyz/tools/jwt/): Decode JWT header/payload to pretty JSON; human-readable iat/nbf/exp timestamps.
+- [Cron Explainer](https://toolbots.xyz/tools/cron/): Explain a five-field Unix cron expression in plain English, including the DOM/DOW AND/OR rule.
 
 ## For automated visitors
 
-- Every page is server-rendered static HTML — readable without JS execution.
+- Pages are static HTML: navigation, docs, and related-tool links are in the source, while titles, lede text, and FAQ sections are rendered client-side from the page's embedded JSON-LD.
 - `/robots.txt` and `/sitemap.xml` enumerate all pages.
 - This file (`/llms.txt`) is the machine-readable site summary.
-- Tool pages expose a JSON-LD block (class `tb-tool`) with name, description, input/output element IDs.
+- Tool pages expose a JSON-LD block (class `tb-tool`) with name, description, input/output element IDs, and FAQ pairs. The six original tools (base64, color, hash, json, text-case, uuid) also carry a FAQPage JSON-LD block mirroring those pairs; the JWT decoder ships FAQ pairs in its tool metadata without a separate FAQPage block.
+- Each tool page ends with a "Related tools" section linking to 2 genuinely related tools with descriptive anchors.
 
 ## Architecture
 
