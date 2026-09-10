@@ -272,7 +272,10 @@
       }
       if (SHORTCUTS[key]) {
         const expanded = SHORTCUTS[key];
-        const d = explain(expanded, null, null);
+        /* shortcuts expand to concrete fields; derive star flags from the
+           expansion so '* *' day fields still hit the 'every day' case */
+        const ex = expanded.split(/\s+/);
+        const d = explain(expanded, { dom: ex[2].startsWith('*'), dow: ex[4].startsWith('*') }, ex);
         return { ok: true, expanded, shortcut: raw.toLowerCase(), description: d };
       }
       const e = new Error(`Unknown shortcut "${raw}". Supported: ${Object.keys(SHORTCUTS).join(', ')}. @reboot is unsupported in v1.`);
