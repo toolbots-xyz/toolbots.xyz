@@ -61,10 +61,24 @@
     if (text.includes('?')) {
       fail(`"?" is a Quartz/Spring token and is unsupported in v1 (use "*" in five-field Unix cron)`);
     }
+    if (text.includes('L') || text.includes('W') || text.includes('#')) {
+      /* L, W and # are Quartz/other-dialect extensions, not Vixie field names */
+      fail(`"L", "W" and "#" are Quartz/Spring-style tokens, not five-field Unix cron — unsupported in v1`);
+    }
     if (!/^[0-9*,\-/]+$/.test(text)) {
-      // names and anything else land here; word it by what we saw
-      if (/[a-uw-zA-UW-Z]/.test(text)) {
-        fail(`field names (${text.replace(/[^A-Za-z]+/g, ' ').trim()}) are valid in Vixie-derived cron but unsupported in v1 — use numbers (${range.min}-${range.max})`);
+      // distinguish recognized Vixie month/weekday names from unknown letters
+      const NAMES = name === 'month'
+        ? ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+        : name === 'dow'
+          ? ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+          : [];
+      const words = (text.match(/[A-Za-z]+/g) || []);
+      const recognized = words.filter((w) => NAMES.includes(w.toLowerCase()));
+      if (recognized.length) {
+        fail(`month/weekday names (${recognized.join(', ').toUpperCase()}) are valid in Vixie-derived cron but unsupported in v1 — use numbers (${range.min}-${range.max})`);
+      }
+      if (words.length) {
+        fail(`unknown name "${words[0]}" in ${FIELD_LABELS[name]} field — five-field Unix cron v1 here accepts numbers (${range.min}-${range.max}) only`);
       }
       fail(`unexpected characters in ${FIELD_LABELS[name]} field ("${text}")`);
     }
@@ -239,14 +253,21 @@
       notes.push('AND semantics: one day field starts with * (so it "counts as starred" even with a step like star-slash-2), so BOTH day conditions must hold.');
     }
     /* step-anchoring cautions (driven by the RAW tokens — the canonical form
-       has already replaced star-steps with explicit lists) */
+       has already replaced star-steps with explicit lists). Text is derived
+       from the ACTUAL parsed values, never assumed two-hit series. */
     if (rawTokens && rawTokens[2] && /^\*\//.test(rawTokens[2])) {
-      notes.push('A step on "*" in day-of-month still counts as a starred field and anchors at the field minimum (1, 3, 5, ...); it is not "every nth day from today".');
+      const domStep = parseInt(rawTokens[2].slice(2), 10);
+      const ord = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+      notes.push(`A step on "*" in day-of-month counts as a starred field and anchors at the field minimum (1): the actual days are ${joinVals(fields.dom.values)}. It is not "every ${ord(domStep)} day from today".`);
     }
     if (rawTokens && rawTokens[0] && /^\*\//.test(rawTokens[0])) {
       const step = parseInt(rawTokens[0].slice(2), 10);
+      const mins = sortVals(m.values);
       if (Number.isFinite(step) && step > 30) {
-        notes.push(`A minute step of ${step} anchors at 0 and resets every hour: it fires at :00 and :${step} within each hour — NOT once every ${step} minutes.`);
+        // describe only what actually happens within each hour; if the step is
+        // >= 60 the field fires once per hour and there is NO sub-hour cadence
+        const times = mins.map((x) => ':' + String(x).padStart(2, '0')).join(' and ');
+        notes.push(`A minute step of ${step} anchors at 0 and resets every hour — steps never span fields. Within each hour it fires only at ${times}; it is NOT once every ${step} minutes.`);
       }
     }
 

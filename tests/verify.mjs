@@ -422,6 +422,27 @@ test('F6: */45 * * * * -> minutes {0,45} with non-span caution', () => {
   assert.match(r.description.combined, /minutes 0, 45/);
   assert.ok(r.description.notes.some((n) => /resets every hour|NOT once every 45/.test(n)));
 });
+test('minute cautions derive from actual values: */60 and */90 never invent :60/:90', () => {
+  for (const [expr, expectTimes] of [['*/60 * * * *', ':00'], ['*/90 * * * *', ':00']]) {
+    const r = dec(expr);
+    assert.match(r.description.combined, /minute 0 of every hour/, `${expr} should fire at minute 0 only`);
+    const note = r.description.notes.find((n) => /resets every hour/.test(n));
+    assert.ok(note, `${expr} should carry a step caution`);
+    assert.match(note, new RegExp(`fires only at ${expectTimes}\\b`), `${expr} caution must list actual fire times`);
+    assert.doesNotMatch(note, /:60|:90|:100/);
+    assert.match(note, /NOT once every (60|90) minutes/);
+  }
+  // */45 keeps both hits
+  const r45 = dec('*/45 * * * *');
+  assert.match(r45.description.notes.find((n) => /resets every hour/.test(n)), /:00 and :45/);
+});
+test('DOM star-step note uses actual values, no hardcoded odd-day series (*/3)', () => {
+  const note = dec('0 0 */3 * *').description.notes.find((n) => /anchors at the field minimum/.test(n));
+  assert.ok(note, 'DOM star-step note missing');
+  assert.match(note, /actual days are 1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31/);
+  assert.doesNotMatch(note, /1, 3, 5/);
+  assert.match(note, /every 3rd day/);
+});
 test('F7: 0 0 */2 * * -> odd days, starred anchoring note', () => {
   const r = dec('0 0 */2 * *');
   assert.match(r.description.combined, /day-of-month is 1, 3, 5/);
@@ -462,9 +483,30 @@ test('star-step stays starred in the expansion (no list re-encoding of day field
   const re = dec(r.expanded);
   assert.match(re.description.combined, /AND/);
 });
-test('F10: month name JAN -> rejected as unsupported in v1 (not "invalid")', () => {
+test('F10: month name JAN in month slot -> rejected as unsupported in v1 (not "invalid")', () => {
+  const e = rej('0 0 * JAN *');
+  assert.match(e.errors[0].message, /^month: month\/weekday names \(JAN\) are valid in Vixie-derived cron but unsupported in v1/);
+  assert.match(e.errors[0].message, /use numbers \(1-12\)/);
+});
+test('F10b: JAN in the DOW slot is an unknown weekday name (names are month-specific)', () => {
   const e = rej('0 0 * * JAN');
-  assert.match(e.errors[0].message, /valid in Vixie-derived cron but unsupported in v1/);
+  assert.match(e.errors[0].message, /^day-of-week: unknown name "JAN"/);
+  assert.match(e.errors[0].message, /accepts numbers \(0-7\) only/);
+});
+test('name errors distinguish recognized names from unknown names', () => {
+  // recognized weekday name -> "valid in Vixie ... unsupported in v1"
+  const mon = rej('0 0 * * MON');
+  assert.match(mon.errors[0].message, /month\/weekday names \(MON\) are valid in Vixie/);
+  // unknown letters -> "unknown name", NOT claimed as valid Vixie
+  const xyz = rej('0 0 * * XYZ');
+  assert.match(xyz.errors[0].message, /unknown name "XYZ"/);
+  assert.doesNotMatch(xyz.errors[0].message, /valid in Vixie/);
+});
+test('L/W/# tokens rejected as Quartz/Spring-style, distinct from names', () => {
+  for (const tok of ['L', 'W', '#']) {
+    const e = rej(`0 0 * * ${tok}`);
+    assert.match(e.errors ? e.errors[0].message : e.message, /Quartz\/Spring-style tokens/);
+  }
 });
 test('F11: DOW name range MON-FRI -> rejected as unsupported in v1', () => {
   const e = rej('0 0 * * MON-FRI');
