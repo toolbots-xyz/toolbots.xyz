@@ -65,6 +65,32 @@
       <p>Decoding happens entirely in your browser. Nothing is transmitted, logged, or stored — you can disconnect from
       the internet and keep using this page.</p>
     </div>
+    <div class="tool-docs">
+      <h2>Worked examples (synthetic — safe to paste)</h2>
+      <p>Both tokens below are synthetic: no real issuer, no real user, no secrets. Decode does not verify a
+      signature or grant any authorization — a decoded token is <strong>unverified data</strong>, and an expiry
+      timestamp is a claim, not proof.</p>
+      <h3>Example 1 — HS256 header with a synthetic (explicitly unverified) signature</h3>
+      <pre>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGFtcGxlLXRvb2xib3QiLCJuYW1lIjoiU3ludGhldGljIEV4YW1wbGUiLCJpYXQiOjE3MzU2ODk2MDAsImV4cCI6MTczNTc3NjAwMH0.c3ludGhldGljLXNpZ25hdHVyZS1ub3QtdmVyaWZpZWQtZG8tbm90LXRydXN0</pre>
+      <p>Expected decode: header <code>{"alg":"HS256","typ":"JWT"}</code>; payload
+      <code>{"sub":"example-toolbot","name":"Synthetic Example","iat":1735689600,"exp":1735776000}</code>.
+      The claims rows show <code>iat</code> 1735689600 → 2025-01-01 00:00:00 UTC and <code>exp</code>
+      1735776000 → 2025-01-02 00:00:00 UTC — exactly one day after issuance. The status line reads
+      <code>✓ Decoded · alg HS256 · 4 payload claims · signature NOT verified</code>: the signature bytes decode
+      cleanly, but nothing was checked against any key. This token proves nothing about anyone.</p>
+      <h3>Example 2 — unsecured token (alg "none", empty signature)</h3>
+      <pre>eyJhbGciOiJub25lIn0.eyJzdWIiOiJ1bnNlY3VyZWQtZGVtbyIsIm5vdGUiOiJzdHJ1Y3R1cmFsbHkgY29tcGxldGUsIGNyeXB0b2dyYXBoaWNhbGx5IHVuc2VjdXJlZCIsImlhdCI6MTczNTY4OTYwMH0.</pre>
+      <p>Expected decode: header <code>{"alg":"none"}</code>; payload
+      <code>{"sub":"unsecured-demo","note":"structurally complete, cryptographically unsecured","iat":1735689600}</code>.
+      The status line warns <code>⚠ Decoded · alg none · UNSECURED token (empty signature, alg "none") — provides
+      no authenticity at all</code>. An unsecured token is structurally complete but offers zero integrity or
+      origin guarantees — anyone can mint one. The <code>iat</code> row (2025-01-01 00:00:00 UTC) describes when
+      the token claims to exist, nothing more.</p>
+      <h3>Negative example — malformed signature</h3>
+      <pre>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGFtcGxlLXRvb2xib3QiLCJuYW1lIjoiU3ludGhldGljIEV4YW1wbGUiLCJpYXQiOjE3MzU2ODk2MDAsImV4cCI6MTczNTc3NjAwMH0.not$$valid$$base64url$$sig</pre>
+      <p>Expected: rejection with <code>✗ Segment 3 (signature) is not valid Base64URL. (Syntax is checked here —
+      authenticity is never verified by this tool.)</code> — the tool reports syntax errors instead of guessing.</p>
+    </div>
     <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
     <div class="tool-docs">
       <h2>Related tools</h2>
