@@ -17,6 +17,8 @@ const TOOLBOTS_TOOLS = [
     desc: 'Convert HEX ⇄ RGB ⇄ HSL, check contrast ratios, build a mini palette.' },
   { path: 'tools/jwt/',       name: 'JWT Decoder',       cats: ['dev', 'crypto'], icon: 'JWT',
     desc: "Decode a JWT's header, payload, and exp/iat timestamps locally. No signature needed." },
+  { path: 'tools/cron/',      name: 'Cron Explainer',    cats: ['dev'],           icon: '*',
+    desc: 'Explain a five-field Unix cron expression in plain English. No runs computed.' },
 ];
 
 /* ---------- helpers shared by tools ---------- */

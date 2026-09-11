@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const TOOLS = ['base64', 'color', 'hash', 'json', 'text-case', 'uuid', 'jwt'];
+const TOOLS = ['base64', 'color', 'hash', 'json', 'text-case', 'uuid', 'jwt', 'cron'];
 
 /* exact approved editorial mapping (manager 00:14 scope) */
 const MAPPING = {
@@ -30,6 +30,7 @@ const MAPPING = {
   uuid: ['hash', 'json'],
   color: ['json', 'text-case'],
   'text-case': ['json', 'base64'],
+  cron: ['jwt', 'json'],
 };
 
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -112,7 +113,7 @@ console.log('\n== llms.txt: 7 tools, accurate absolute URLs ==');
       assert.ok(entry, `missing/bad llms.txt entry for ${t}`);
       assert.ok(entry[1].length > 3 && entry[2].length > 10, `thin entry for ${t}`);
     }
-    assert.equal((m[1].match(/^- \[/gm) || []).length, 7, 'Tools section must list exactly 7 tools');
+    assert.equal((m[1].match(/^- \[/gm) || []).length, 8, 'Tools section must list exactly 8 tools');
   });
   test('llms.txt URL paths exist on disk', () => {
     for (const t of TOOLS) assert.ok(fs.existsSync(path.join(ROOT, `tools/${t}/index.html`)), `llms.txt URL /tools/${t}/ has no page`);

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Explain a five-field Unix cron expression in plain English, right in your browser. No uploads, no sign-up.">
+<title>Cron Explainer — ToolBots</title>
+<link rel="canonical" href="https://toolbots.xyz/tools/cron/">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script type="application/ld+json" class="tb-tool">
+{"name":"Cron Explainer","description":"Explain a five-field Unix cron expression in plain English — right in your browser, with nothing ever uploaded.","inputElement":"input-text","outputElement":"output-text","faq":[
+["Does this run my cron schedule or tell me future run times?","No — this is a description tool only. It explains what a five-field Unix cron expression means in plain English. When runs happen next depends on your machine's timezone and clock, which this page deliberately does not compute."],
+["Which cron dialect does it support?","Five-field Unix cron (minute, hour, day-of-month, month, day-of-week) with numbers, wildcards, lists, inclusive ranges, and steps — the Vixie-style behavior described in crontab(5). Six- or seven-field Quartz/Spring expressions are a different dialect and are rejected with an explanation."],
+["Why does my expression show an error?","Common causes: out-of-range values (minutes are 0-59, hours 0-23), a zero step, month or weekday names (valid cron, but unsupported in this tool — use numbers), or six/seven fields (Quartz/Spring dialect). @reboot is not a recurring schedule and is unsupported."]]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-grid">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22d3ee"/><rect x="7" y="8" width="10" height="3" rx="1.5" fill="#0b1020"/><circle cx="12" cy="16.5" r="2" fill="#0b1020"/></svg></span>ToolBots<span class="tld">.xyz</span></a>
+    <nav class="main-nav" aria-label="Main"><a href="/#tools" class="nav-link">Tools</a><a href="/#about" class="nav-link">About</a><span class="nav-bits">Esc = clear</span></nav>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap tool-head">
+    <p class="crumb"><a href="/">ToolBots</a> / <span data-tb="crumb-name"></span></p>
+    <h1 data-tb="page-title"></h1>
+    <p class="lede" data-tb="lede"></p>
+  </div>
+  <div class="wrap">
+    <div class="workbench">
+      <div><label for="input-text">Cron expression</label>
+        <textarea id="input-text" spellcheck="false" maxlength="120" placeholder="*/5 * * * *"></textarea></div>
+      <div class="wb-row actions wb-btns">
+        <button id="explain-btn" class="btn-sm primary">Explain</button>
+        <button id="copy-btn" data-tb="copy-btn" class="btn-sm ghost">Copy</button>
+        <button id="clear-btn" data-tb="clear-btn" class="btn-sm ghost">Clear</button>
+      </div>
+      <div id="tool-status" class="status" role="status" aria-live="polite"></div>
+      <div><label>Plain-English schedule</label>
+        <div class="prewrap"><pre id="output-text"></pre></div></div>
+      <div><label>Field-by-field</label>
+        <div class="reading" id="cron-fields"></div></div>
+      <div><label>Shortcut expansion</label>
+        <div class="reading" id="cron-expansion"><div><dt>—</dt><dd>No shortcut in use</dd></div></div></div>
+      <div><label>Semantics notes</label>
+        <div class="reading" id="cron-notes"><div><dt>—</dt><dd>None for this expression</dd></div></div></div>
+    </div>
+    <div class="tool-docs">
+      <h2>How it works</h2>
+      <p>Five fields: <strong>minute&nbsp; hour&nbsp; day-of-month&nbsp; month&nbsp; day-of-week</strong> (0-59, 0-23,
+      1-31, 1-12, 0-7 — where both 0 and 7 mean Sunday). Fields accept <code>*</code>, single numbers, comma-separated
+      lists, inclusive ranges like <code>9-17</code>, and steps like <code>*/5</code> or <code>1-15/3</code>. The
+      shortcut forms <code>@yearly</code>, <code>@annually</code>, <code>@monthly</code>, <code>@weekly</code>,
+      <code>@daily</code>, <code>@midnight</code> and <code>@hourly</code> are expanded and explained.</p>
+      <h2>The day-of-month / day-of-week quirk</h2>
+      <p>If <strong>both</strong> day fields are restricted (neither is <code>*</code> nor starts with it), cron runs
+      the job when <strong>either</strong> matches — the union. If either field is <code>*</code> or a
+      <code>*</code>-step like <code>*/2</code>, the fields combine with <strong>and</strong>. This tool flags which
+      case applies and why, exactly as the classic cron implementations behave.</p>
+      <h2>What it does not do</h2>
+      <p>No future-run preview and no timezone or DST handling — when a job fires next depends on the scheduler's
+      timezone, and explaining that belongs to the machine running the schedule. Month and weekday names (JAN, MON)
+      are valid cron but not supported by this tool; use numbers. Six- or seven-field expressions are the
+      Quartz/Spring dialect, not Unix cron.</p>
+      <h2>Privacy</h2>
+      <p>Explanation happens entirely in your browser. Nothing is transmitted, logged, or stored — you can disconnect
+      from the internet and keep using this page.</p>
+    </div>
+    <div class="tool-docs"><h2>FAQ</h2><div data-tb="faq"></div></div>
+    <div class="tool-docs">
+      <h2>Related tools</h2>
+      <p><a href="/tools/json/">JSON formatter</a> — cron fields are comma-separated lists, much like JSON arrays; validate and inspect the JSON your scheduler emits.</p>
+      <p><a href="/tools/jwt/">JWT decoder</a> — scheduled jobs often authenticate with bearer tokens; decode one to check its expiry claims before wiring it into cron.</p>
+    </div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col footer-brand"><span class="logo logo-footer">ToolBots<span class="tld">.xyz</span></span><p>Free, private, bot-run browser tools.</p></div>
+    <nav class="footer-col" aria-label="Tools"><h4>Tools</h4><a href="/tools/json/">JSON formatter</a><a href="/tools/base64/">Base64 encoder</a><a href="/tools/hash/">SHA-256 hasher</a><a href="/tools/text-case/">Text case converter</a><a href="/tools/uuid/">UUID generator</a><a href="/tools/color/">Color inspector</a><a href="/tools/jwt/">JWT decoder</a></nav>
+    <nav class="footer-col" aria-label="Site"><h4>Site</h4><a href="/#about">About</a><a href="/llms.txt">llms.txt</a><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">Sitemap</a><a href="https://github.com/toolbots-xyz/toolbots.xyz" rel="noopener">Source on GitHub</a></nav>
+    <div class="footer-col footer-meta"><h4>Status</h4><p class="statusline"><span class="dot" aria-hidden="true"></span> All bots operational</p><p class="fineprint">© 2026 ToolBots · Public source · No tracking</p></div>
+  </div>
+  <div class="footer-base"><div class="wrap">Deployed via GitHub Actions · Hosted free on GitHub Pages + Cloudflare</div></div>
+</footer>
+<script src="logic.js"></script>
+<script src="/assets/js/app.js" defer></script>
+<script>
+let cronDebounce = null; /* shared by tbInit/tbClear so Clear/Esc cancels pending work */
+window.tbInit = function () {
+  const input = document.getElementById('input-text');
+  const status = document.getElementById('tool-status');
+  const out = document.getElementById('output-text');
+  const fieldsEl = document.getElementById('cron-fields');
+  const expansionEl = document.getElementById('cron-expansion');
+  const notesEl = document.getElementById('cron-notes');
+  const set = (ok, msg) => { status.textContent = msg; status.className = 'status ' + (ok ? 'ok' : 'err'); };
+  const C = globalThis.TBCron;
+
+  const emptyList = (el, dtText, ddText) => {
+    const wrap = document.createElement('div');
+    const dt = document.createElement('dt'); dt.textContent = dtText;
+    const dd = document.createElement('dd'); dd.textContent = ddText;
+    wrap.appendChild(dt); wrap.appendChild(dd);
+    el.replaceChildren(wrap);
+  };
+
+  const resetOutputs = () => {
+    out.textContent = '';
+    emptyList(fieldsEl, '—', 'Nothing decoded');
+    emptyList(expansionEl, '—', 'No shortcut in use');
+    emptyList(notesEl, '—', 'None for this expression');
+  };
+
+  const render = (r) => {
+    out.textContent = r.description.combined;
+    /* all expression-derived values inserted via textContent — never markup */
+    fieldsEl.replaceChildren();
+    for (const f of r.description.perField) {
+      const wrap = document.createElement('div');
+      const dt = document.createElement('dt'); dt.textContent = f.field + ' ("' + f.raw + '")';
+      const dd = document.createElement('dd'); dd.textContent = f.text;
+      wrap.appendChild(dt); wrap.appendChild(dd);
+      fieldsEl.appendChild(wrap);
+    }
+    if (r.shortcut) {
+      const wrap = document.createElement('div');
+      const dt = document.createElement('dt'); dt.textContent = r.shortcut;
+      const dd = document.createElement('dd'); dd.textContent = 'expands to ' + r.expanded;
+      wrap.appendChild(dt); wrap.appendChild(dd);
+      expansionEl.replaceChildren(wrap);
+    } else {
+      emptyList(expansionEl, '—', 'No shortcut in use');
+    }
+    if (r.description.notes.length) {
+      notesEl.replaceChildren();
+      for (const n of r.description.notes) {
+        const wrap = document.createElement('div');
+        const dt = document.createElement('dt'); dt.textContent = 'Note';
+        const dd = document.createElement('dd'); dd.textContent = n;
+        wrap.appendChild(dt); wrap.appendChild(dd);
+        notesEl.appendChild(wrap);
+      }
+    } else {
+      emptyList(notesEl, '—', 'None for this expression');
+    }
+  };
+
+  const explainNow = () => {
+    const raw = input.value;
+    if (!raw.trim()) { resetOutputs(); status.textContent = ''; status.className = 'status'; return; }
+    try {
+      const r = C.decode(raw);
+      render(r);
+      set(true, '✓ Understood · five-field Unix cron' + (r.shortcut ? ' (shortcut expanded)' : ''));
+    } catch (e) {
+      resetOutputs(); // never leave stale output after a failed decode
+      set(false, '✗ ' + (e && e.message ? e.message : 'Could not read this expression.'));
+    }
+  };
+
+  document.getElementById('explain-btn').addEventListener('click', explainNow);
+  input.addEventListener('input', () => { clearTimeout(cronDebounce); cronDebounce = setTimeout(explainNow, 200); });
+};
+window.tbClear = function () {
+  clearTimeout(cronDebounce); cronDebounce = null; /* cancel pending auto-explain */
+  const input = document.getElementById('input-text');
+  const status = document.getElementById('tool-status');
+  if (input) { input.value = ''; input.focus(); }
+  const out = document.getElementById('output-text');
+  if (out) out.textContent = '';
+  const fieldsEl = document.getElementById('cron-fields');
+  const expansionEl = document.getElementById('cron-expansion');
+  const notesEl = document.getElementById('cron-notes');
+  const empty = (el, dtText, ddText) => {
+    if (!el) return;
+    const wrap = document.createElement('div');
+    const dt = document.createElement('dt'); dt.textContent = dtText;
+    const dd = document.createElement('dd'); dd.textContent = ddText;
+    wrap.appendChild(dt); wrap.appendChild(dd);
+    el.replaceChildren(wrap);
+  };
+  empty(fieldsEl, '—', 'Nothing decoded');
+  empty(expansionEl, '—', 'No shortcut in use');
+  empty(notesEl, '—', 'None for this expression');
+  if (status) { status.textContent = ''; status.className = 'status'; }
+};
+</script>
+</body>
+</html>
